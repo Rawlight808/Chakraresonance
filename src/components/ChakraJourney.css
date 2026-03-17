@@ -1,3 +1,145 @@
+/* ── Mode selection screen ──────────────────────────── */
+
+.journey-select {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #0a0a14, #12101f, #0d0f1a);
+  color: #fdfdfd;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  position: relative;
+}
+
+.journey-select__back {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.5rem;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.journey-select__back:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.journey-select__content {
+  text-align: center;
+  padding: 2rem;
+  max-width: 480px;
+}
+
+.journey-select__title {
+  font-size: 2.2rem;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.8rem;
+}
+
+.journey-select__desc {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 2rem;
+}
+
+.journey-select__buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.journey-select__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  min-width: 180px;
+  transition: transform 0.2s, background 0.25s, border-color 0.25s;
+}
+
+.journey-select__btn:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(192, 132, 252, 0.3);
+}
+
+.journey-select__btn-icon {
+  font-size: 2rem;
+  opacity: 0.7;
+}
+
+.journey-select__btn-label {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.journey-select__btn-sub {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Journey complete screen ───────────────────────── */
+
+.journey-complete {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fdfdfd;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+}
+
+.journey-complete__content {
+  text-align: center;
+  padding: 2rem;
+  max-width: 460px;
+}
+
+.journey-complete__orb {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 2rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.4), rgba(192, 132, 252, 0.3), transparent 70%);
+  animation: landingOrbPulse 5s ease-in-out infinite;
+}
+
+.journey-complete__content h1 {
+  font-size: 2rem;
+  font-weight: 300;
+  margin: 0 0 1rem;
+  letter-spacing: 0.04em;
+}
+
+.journey-complete__content p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 2rem;
+}
+
+.journey-complete__actions {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+/* ── Main journey layout ───────────────────────────── */
+
 .chakra-journey {
   min-height: 100vh;
   display: flex;
@@ -9,106 +151,209 @@
 
 .chakra-journey__content {
   width: 100%;
-  max-width: 1120px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 3rem;
+  padding: 1.5rem 1.5rem 2.5rem;
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 2fr);
-  gap: 2rem;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 1.5rem;
 }
 
+/* ── Sidebar ───────────────────────────────────────── */
+
 .chakra-journey__sidebar {
-  border-radius: 1.75rem;
-  background: rgba(10, 10, 20, 0.65);
+  border-radius: 1.5rem;
+  background: rgba(10, 10, 20, 0.7);
   backdrop-filter: blur(20px);
-  padding: 1.5rem 1.25rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.6rem;
+  max-height: 100vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 1rem;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-exit {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.sidebar-exit:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-mode {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .chakra-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.2rem;
 }
 
 .chakra-list__item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.35rem 0.4rem;
-  border-radius: 999px;
+  gap: 0.6rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.75rem;
   border: none;
   background: transparent;
-  color: inherit;
+  color: rgba(255, 255, 255, 0.55);
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.18s ease-out, transform 0.12s ease-out;
-  font-size: 0.9rem;
+  transition: background-color 0.18s, color 0.18s, transform 0.12s;
+  font-size: 0.8rem;
 }
 
 .chakra-list__item--active {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
   transform: translateX(2px);
 }
 
+.chakra-list__item--done {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.chakra-list__item:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.chakra-list__item:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .chakra-list__item:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.75);
-  outline-offset: 2px;
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 1px;
 }
 
 .chakra-list__dot {
-  width: 0.85rem;
-  height: 0.85rem;
-  border-radius: 999px;
-  box-shadow: 0 0 0 1px rgba(8, 8, 8, 0.55), 0 0 18px rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
 }
 
 .chakra-list__label {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
 }
 
+.chakra-list__note {
+  font-size: 0.68rem;
+  opacity: 0.55;
+}
+
+.chakra-list__dir {
+  font-size: 0.75rem;
+  opacity: 0.4;
+}
+
+/* ── Main panel ────────────────────────────────────── */
+
 .chakra-journey__main {
-  border-radius: 2rem;
+  border-radius: 1.75rem;
   background: linear-gradient(
-    135deg,
-    rgba(5, 7, 20, 0.9),
-    rgba(15, 9, 45, 0.9),
-    rgba(4, 26, 27, 0.9)
+    145deg,
+    rgba(5, 7, 20, 0.88),
+    rgba(12, 8, 35, 0.88),
+    rgba(4, 20, 22, 0.88)
   );
   backdrop-filter: blur(22px);
-  padding: 1.75rem 1.75rem 1.9rem;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+  padding: 2rem 2rem 2.25rem;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
 }
 
 .chakra-header__eyebrow {
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 0.14em;
-  opacity: 0.75;
-  margin-bottom: 0.25rem;
+  opacity: 0.6;
+  margin-bottom: 0.3rem;
 }
 
 .chakra-header__title {
   font-size: 1.8rem;
+  font-weight: 400;
   letter-spacing: 0.03em;
   margin: 0;
+  transition: color 0.6s;
 }
 
 .chakra-header__location {
-  margin-top: 0.3rem;
-  font-size: 0.98rem;
-  opacity: 0.85;
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  opacity: 0.7;
 }
 
-.chakra-layout {
-  margin-top: 1.7rem;
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.3fr);
-  gap: 1.75rem;
+/* ── Timer ─────────────────────────────────────────── */
+
+.chakra-timer {
+  margin-top: 1.2rem;
+  display: flex;
   align-items: center;
+  gap: 0.8rem;
 }
+
+.chakra-timer__bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.chakra-timer__fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.chakra-timer__label {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+}
+
+/* ── Layout grid ───────────────────────────────────── */
+
+.chakra-layout {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+/* ── Visual orb ────────────────────────────────────── */
 
 .chakra-visual {
   display: flex;
@@ -118,49 +363,51 @@
 }
 
 .chakra-visual__glow {
-  width: 230px;
-  height: 230px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 20%, #ffffff, rgba(255, 255, 255, 0) 55%);
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.25), transparent 55%);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 0 25px rgba(255, 255, 255, 0.2),
-    0 35px 75px rgba(0, 0, 0, 0.85);
+    0 0 20px rgba(255, 255, 255, 0.15),
+    0 30px 60px rgba(0, 0, 0, 0.7);
 }
 
 .chakra-visual__core {
-  width: 120px;
-  height: 120px;
-  border-radius: 999px;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
   box-shadow:
-    0 0 30px rgba(255, 255, 255, 0.8),
-    0 0 70px rgba(255, 255, 255, 0.6);
+    0 0 25px rgba(255, 255, 255, 0.7),
+    0 0 60px rgba(255, 255, 255, 0.4);
   animation: chakraPulse 4.5s ease-in-out infinite;
 }
 
-.chakra-visual__image-frame {
-  width: 100%;
-  max-width: 320px;
-  aspect-ratio: 16 / 10;
-  border-radius: 1.4rem;
-  overflow: hidden;
-  position: relative;
-  background: rgba(0, 0, 0, 0.4);
+/* ── Vowel display ─────────────────────────────────── */
+
+.chakra-vowel {
+  text-align: center;
 }
 
-.chakra-visual__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scale(1.05);
-  transition: transform 12s ease-out;
+.chakra-vowel__label {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  opacity: 0.5;
+  margin-bottom: 0.25rem;
 }
 
-.chakra-visual__image-frame:hover .chakra-visual__image {
-  transform: scale(1.12);
+.chakra-vowel__sound {
+  font-size: 1.6rem;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  opacity: 0.9;
 }
+
+/* ── Info panel ────────────────────────────────────── */
 
 .chakra-info {
   display: flex;
@@ -172,199 +419,231 @@
   display: inline-flex;
   align-items: baseline;
   gap: 0.6rem;
-  font-size: 0.95rem;
 }
 
 .chakra-note__label {
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  font-size: 0.72rem;
-  opacity: 0.75;
+  font-size: 0.68rem;
+  opacity: 0.6;
 }
 
 .chakra-note__value {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 600;
 }
 
 .chakra-note__frequency {
-  opacity: 0.78;
+  opacity: 0.65;
+  font-size: 0.9rem;
 }
 
 .chakra-description {
-  font-size: 0.98rem;
-  line-height: 1.6;
-  opacity: 0.96;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  opacity: 0.85;
 }
 
-.chakra-affirmation {
-  margin-top: 0.25rem;
-  font-size: 0.95rem;
-}
+/* ── Affirmation ───────────────────────────────────── */
 
 .chakra-affirmation__label {
   display: block;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  font-size: 0.72rem;
-  opacity: 0.78;
+  font-size: 0.68rem;
+  opacity: 0.6;
   margin-bottom: 0.2rem;
 }
 
 .chakra-affirmation__text {
-  opacity: 0.94;
+  font-size: 0.95rem;
+  font-style: italic;
+  opacity: 0.88;
+  line-height: 1.5;
 }
+
+/* ── Essential Oils ────────────────────────────────── */
+
+.chakra-oils__label {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.68rem;
+  opacity: 0.6;
+  margin-bottom: 0.35rem;
+}
+
+.chakra-oils__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.chakra-oil-pill {
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Theme pills ───────────────────────────────────── */
 
 .chakra-themes {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.4rem;
+  gap: 0.35rem;
 }
 
 .chakra-theme-pill {
-  padding: 0.25rem 0.6rem;
+  padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.8rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.55);
 }
+
+/* ── Controls ──────────────────────────────────────── */
 
 .chakra-controls {
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
-  margin-top: 0.6rem;
+  margin-top: 0.5rem;
 }
 
-.chakra-controls__secondary {
+.chakra-controls__nav {
   display: flex;
-  flex-wrap: wrap;
   gap: 0.6rem;
-}
-
-.chakra-auto {
-  margin-top: 0.4rem;
-}
-
-.chakra-auto__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.83rem;
-  opacity: 0.9;
-}
-
-.chakra-auto__toggle input[type='checkbox'] {
-  width: 0.9rem;
-  height: 0.9rem;
-  accent-color: #ffffff;
-}
-
-.chakra-auto__label {
-  white-space: nowrap;
 }
 
 .btn {
   border-radius: 999px;
   border: none;
-  padding: 0.55rem 1rem;
-  font-size: 0.9rem;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.88rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
   transition:
-    background-color 0.18s ease-out,
-    color 0.18s ease-out,
-    transform 0.09s ease-out,
-    box-shadow 0.16s ease-out;
+    background-color 0.18s,
+    color 0.18s,
+    transform 0.09s,
+    box-shadow 0.16s;
 }
 
 .btn:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline: 2px solid rgba(255, 255, 255, 0.7);
   outline-offset: 2px;
 }
 
 .btn--primary {
   background: #ffffff;
   color: #111827;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.7);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.6);
 }
 
 .btn--primary:hover {
   background: #f9fafb;
   transform: translateY(-1px);
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.8);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.7);
 }
 
 .btn--ghost {
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.55);
   color: #e5e7eb;
-  border: 1px solid rgba(249, 250, 251, 0.14);
+  border: 1px solid rgba(249, 250, 251, 0.12);
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(15, 23, 42, 0.85);
 }
 
 .btn--ghost:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: default;
 }
 
+/* ── Animations ────────────────────────────────────── */
+
 @keyframes chakraPulse {
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(1);
     box-shadow:
-      0 0 30px rgba(255, 255, 255, 0.75),
-      0 0 70px rgba(255, 255, 255, 0.5);
+      0 0 25px rgba(255, 255, 255, 0.65),
+      0 0 60px rgba(255, 255, 255, 0.35);
   }
   50% {
     transform: scale(1.06);
     box-shadow:
-      0 0 35px rgba(255, 255, 255, 0.9),
-      0 0 85px rgba(255, 255, 255, 0.8);
+      0 0 30px rgba(255, 255, 255, 0.8),
+      0 0 75px rgba(255, 255, 255, 0.6);
   }
 }
 
+@keyframes landingOrbPulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+/* ── Responsive ────────────────────────────────────── */
+
 @media (max-width: 900px) {
   .chakra-journey__content {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr;
+    padding: 1rem;
   }
 
   .chakra-journey__sidebar {
     order: 2;
+    max-height: none;
+    position: static;
   }
 
   .chakra-layout {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr;
   }
 
-  .chakra-auto__label {
-    white-space: normal;
+  .journey-select__buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .journey-select__btn {
+    width: 100%;
+    max-width: 280px;
   }
 }
 
 @media (max-width: 640px) {
-  .chakra-journey__content {
-    padding-inline: 1rem;
-  }
-
   .chakra-journey__main {
-    padding: 1.4rem 1.35rem 1.5rem;
+    padding: 1.4rem 1.2rem 1.5rem;
   }
 
   .chakra-visual__glow {
-    width: 190px;
-    height: 190px;
+    width: 160px;
+    height: 160px;
   }
 
   .chakra-visual__core {
-    width: 100px;
-    height: 100px;
+    width: 90px;
+    height: 90px;
+  }
+
+  .chakra-header__title {
+    font-size: 1.4rem;
+  }
+
+  .chakra-vowel__sound {
+    font-size: 1.3rem;
+  }
+
+  .journey-complete__actions {
+    flex-direction: column;
+    align-items: center;
   }
 }
-

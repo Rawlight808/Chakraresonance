@@ -3,9 +3,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 type TonePlayer = {
   playTone: (frequencyHz: number) => void
   stopTone: () => void
+  crossfadeTo: (frequencyHz: number) => void
   isPlaying: boolean
   currentFrequency: number | null
 }
+
+const FADE_IN = 0.4
+const FADE_OUT = 0.3
+const CROSSFADE = 0.8
 
 export function useTonePlayer(): TonePlayer {
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -14,43 +19,38 @@ export function useTonePlayer(): TonePlayer {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentFrequency, setCurrentFrequency] = useState<number | null>(null)
 
-  const createContextIfNeeded = () => {
+  const getContext = () => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
     }
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume()
+    }
+    return audioContextRef.current
   }
 
   const stopTone = useCallback(() => {
-    if (!audioContextRef.current) return
     const ctx = audioContextRef.current
     const oscillator = oscillatorRef.current
     const gainNode = gainNodeRef.current
 
-    if (oscillator && gainNode) {
+    if (ctx && oscillator && gainNode) {
       const now = ctx.currentTime
       gainNode.gain.cancelScheduledValues(now)
       gainNode.gain.setValueAtTime(gainNode.gain.value, now)
-      gainNode.gain.linearRampToValueAtTime(0, now + 0.1)
-
-      oscillator.stop(now + 0.11)
-      oscillatorRef.current = null
-      gainNodeRef.current = null
-
-      setIsPlaying(false)
-      setCurrentFrequency(null)
+      gainNode.gain.linearRampToValueAtTime(0, now + FADE_OUT)
+      oscillator.stop(now + FADE_OUT + 0.05)
     }
+
+    oscillatorRef.current = null
+    gainNodeRef.current = null
+    setIsPlaying(false)
+    setCurrentFrequency(null)
   }, [])
 
   const playTone = useCallback(
     (frequencyHz: number) => {
-      createContextIfNeeded()
-      const ctx = audioContextRef.current
-      if (!ctx) return
-
-      if (ctx.state === 'suspended') {
-        // Some browsers require a resume after a user gesture
-        ctx.resume()
-      }
+      const ctx = getContext()
 
       if (oscillatorRef.current) {
         stopTone()
@@ -68,7 +68,7 @@ export function useTonePlayer(): TonePlayer {
 
       const now = ctx.currentTime
       gainNode.gain.setValueAtTime(0, now)
-      gainNode.gain.linearRampToValueAtTime(0.4, now + 0.2)
+      gainNode.gain.linearRampToValueAtTime(0.35, now + FADE_IN)
 
       oscillator.start(now)
 
@@ -81,6 +81,43 @@ export function useTonePlayer(): TonePlayer {
     [stopTone],
   )
 
+  const crossfadeTo = useCallback(
+    (frequencyHz: number) => {
+      const ctx = getContext()
+      const oldOsc = oscillatorRef.current
+      const oldGain = gainNodeRef.current
+
+      const newOsc = ctx.createOscillator()
+      const newGain = ctx.createGain()
+
+      newOsc.type = 'sine'
+      newOsc.frequency.value = frequencyHz
+      newGain.gain.value = 0
+      newOsc.connect(newGain)
+      newGain.connect(ctx.destination)
+
+      const now = ctx.currentTime
+
+      if (oldOsc && oldGain) {
+        oldGain.gain.cancelScheduledValues(now)
+        oldGain.gain.setValueAtTime(oldGain.gain.value, now)
+        oldGain.gain.linearRampToValueAtTime(0, now + CROSSFADE)
+        oldOsc.stop(now + CROSSFADE + 0.05)
+      }
+
+      newGain.gain.setValueAtTime(0, now)
+      newGain.gain.linearRampToValueAtTime(0.35, now + CROSSFADE)
+      newOsc.start(now)
+
+      oscillatorRef.current = newOsc
+      gainNodeRef.current = newGain
+
+      setIsPlaying(true)
+      setCurrentFrequency(frequencyHz)
+    },
+    [],
+  )
+
   useEffect(() => {
     return () => {
       stopTone()
@@ -91,6 +128,5 @@ export function useTonePlayer(): TonePlayer {
     }
   }, [stopTone])
 
-  return { playTone, stopTone, isPlaying, currentFrequency }
+  return { playTone, stopTone, crossfadeTo, isPlaying, currentFrequency }
 }
-
