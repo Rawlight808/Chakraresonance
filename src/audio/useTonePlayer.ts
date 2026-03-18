@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 type TonePlayer = {
-  playTone: (frequencyHz: number) => void
+  playTone: (frequencyHz: number) => Promise<void>
   stopTone: () => void
-  crossfadeTo: (frequencyHz: number) => void
+  crossfadeTo: (frequencyHz: number) => Promise<void>
   isPlaying: boolean
   currentFrequency: number | null
 }
@@ -19,13 +19,15 @@ export function useTonePlayer(): TonePlayer {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentFrequency, setCurrentFrequency] = useState<number | null>(null)
 
-  const getContext = () => {
+  const getContext = async () => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
     }
-    if (audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume()
+
+    if (audioContextRef.current.state !== 'running') {
+      await audioContextRef.current.resume()
     }
+
     return audioContextRef.current
   }
 
@@ -49,8 +51,8 @@ export function useTonePlayer(): TonePlayer {
   }, [])
 
   const playTone = useCallback(
-    (frequencyHz: number) => {
-      const ctx = getContext()
+    async (frequencyHz: number) => {
+      const ctx = await getContext()
 
       if (oscillatorRef.current) {
         stopTone()
@@ -82,8 +84,8 @@ export function useTonePlayer(): TonePlayer {
   )
 
   const crossfadeTo = useCallback(
-    (frequencyHz: number) => {
-      const ctx = getContext()
+    async (frequencyHz: number) => {
+      const ctx = await getContext()
       const oldOsc = oscillatorRef.current
       const oldGain = gainNodeRef.current
 

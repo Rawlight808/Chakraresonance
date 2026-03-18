@@ -26,7 +26,7 @@ export function ChakraJourney() {
       setElapsed(0)
 
       if (mode === 'auto') {
-        crossfadeTo(journeySteps[nextIndex].frequencyHz)
+        void crossfadeTo(journeySteps[nextIndex].frequencyHz)
       }
     },
     [mode, crossfadeTo],
@@ -39,7 +39,7 @@ export function ChakraJourney() {
     setJourneyComplete(false)
 
     if (selectedMode === 'auto') {
-      playTone(journeySteps[0].frequencyHz)
+      void playTone(journeySteps[0].frequencyHz)
     }
   }
 
@@ -86,7 +86,7 @@ export function ChakraJourney() {
     if (isPlaying) {
       stopTone()
     } else {
-      playTone(step.frequencyHz)
+      void playTone(step.frequencyHz)
     }
   }
 
@@ -206,7 +206,7 @@ export function ChakraJourney() {
                     if (mode === 'manual' || isCurrent) {
                       goToStep(i)
                       if (mode === 'manual' && isPlaying) {
-                        playTone(journeySteps[i].frequencyHz)
+                        void playTone(journeySteps[i].frequencyHz)
                       }
                     }
                   }}
@@ -365,7 +365,7 @@ export function ChakraJourney() {
                     onClick={() => {
                       goToStep(currentIndex - 1)
                       if (mode === 'manual' && isPlaying) {
-                        playTone(journeySteps[Math.max(0, currentIndex - 1)].frequencyHz)
+                        void playTone(journeySteps[Math.max(0, currentIndex - 1)].frequencyHz)
                       }
                     }}
                     disabled={currentIndex === 0}
@@ -379,7 +379,7 @@ export function ChakraJourney() {
                       if (currentIndex < totalSteps - 1) {
                         goToStep(currentIndex + 1)
                         if (mode === 'manual' && isPlaying) {
-                          playTone(journeySteps[currentIndex + 1].frequencyHz)
+                          void playTone(journeySteps[currentIndex + 1].frequencyHz)
                         }
                       } else {
                         stopTone()
