@@ -25,7 +25,8 @@ export function useTonePlayer(): TonePlayer {
 
   const getContext = async () => {
     if (!audioContextRef.current) {
-      const AudioContextClass = window.AudioContext || (window as WindowWithWebkitAudio).webkitAudioContext
+      const AudioContextClass =
+        window.AudioContext || (window as unknown as WindowWithWebkitAudio).webkitAudioContext
       audioContextRef.current = new AudioContextClass()
     }
 
