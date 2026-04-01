@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { journeySteps, totalSteps } from '../data/chakras'
+import type { ChakraId } from '../data/chakras'
 import { useTonePlayer } from '../audio/useTonePlayer'
+import { useMusicPlayer } from '../audio/useMusicPlayer'
+import { chakraSongs } from '../data/chakraSongs'
 import { BodySilhouette } from './BodySilhouette'
 import './ChakraJourney.css'
 
 type JourneyMode = 'auto' | 'manual' | null
+type AudioMode = 'tone' | 'music' | 'both'
 
 export function ChakraJourney() {
   const navigate = useNavigate()
@@ -13,12 +17,59 @@ export function ChakraJourney() {
   const [mode, setMode] = useState<JourneyMode>(null)
   const [elapsed, setElapsed] = useState(0)
   const [journeyComplete, setJourneyComplete] = useState(false)
+  const [audioMode, setAudioMode] = useState<AudioMode>('tone')
+  const [showPlaylist, setShowPlaylist] = useState(false)
   const timerRef = useRef<number | null>(null)
   const elapsedRef = useRef(0)
+  const prevChakraRef = useRef<ChakraId | null>(null)
 
-  const { playTone, stopTone, crossfadeTo, isPlaying } = useTonePlayer()
+  const { playTone, stopTone, crossfadeTo, isPlaying: toneIsPlaying } = useTonePlayer()
+  const music = useMusicPlayer()
 
   const step = useMemo(() => journeySteps[currentIndex], [currentIndex])
+  const songs = useMemo(() => chakraSongs[step.chakraId] ?? [], [step.chakraId])
+
+  const wantsTone = audioMode === 'tone' || audioMode === 'both'
+  const wantsMusic = audioMode === 'music' || audioMode === 'both'
+
+  useEffect(() => {
+    const prev = prevChakraRef.current
+    prevChakraRef.current = step.chakraId
+
+    if (prev !== null && prev !== step.chakraId) {
+      music.stopSong()
+      if (wantsMusic && songs.length > 0) {
+        music.playSong(songs[0].file)
+      }
+    }
+  }, [step.chakraId, songs, wantsMusic])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAudioModeChange = (newMode: AudioMode) => {
+    const oldWantsTone = audioMode === 'tone' || audioMode === 'both'
+    const oldWantsMusic = audioMode === 'music' || audioMode === 'both'
+    const newWantsTone = newMode === 'tone' || newMode === 'both'
+    const newWantsMusic = newMode === 'music' || newMode === 'both'
+
+    if (oldWantsTone && !newWantsTone) {
+      stopTone()
+    }
+    if (!oldWantsTone && newWantsTone && mode) {
+      void playTone(step.frequencyHz)
+    }
+
+    if (oldWantsMusic && !newWantsMusic) {
+      music.stopSong()
+    }
+    if (!oldWantsMusic && newWantsMusic && mode) {
+      if (music.currentSong) {
+        music.resumeSong()
+      } else if (songs.length > 0) {
+        music.playSong(songs[0].file)
+      }
+    }
+
+    setAudioMode(newMode)
+  }
 
   const goToStep = useCallback(
     (nextIndex: number) => {
@@ -26,11 +77,11 @@ export function ChakraJourney() {
       setCurrentIndex(nextIndex)
       setElapsed(0)
 
-      if (mode === 'auto') {
+      if (mode === 'auto' && (audioMode === 'tone' || audioMode === 'both')) {
         void crossfadeTo(journeySteps[nextIndex].frequencyHz)
       }
     },
-    [mode, crossfadeTo],
+    [mode, audioMode, crossfadeTo],
   )
 
   const startJourney = (selectedMode: JourneyMode) => {
@@ -38,23 +89,26 @@ export function ChakraJourney() {
     setCurrentIndex(0)
     setElapsed(0)
     setJourneyComplete(false)
+    prevChakraRef.current = journeySteps[0].chakraId
 
-    if (selectedMode === 'auto') {
+    if (selectedMode === 'auto' && wantsTone) {
       void playTone(journeySteps[0].frequencyHz)
     }
   }
 
   const exitJourney = useCallback(() => {
     stopTone()
+    music.stopSong()
     setMode(null)
     setCurrentIndex(0)
     setElapsed(0)
     setJourneyComplete(false)
+    setShowPlaylist(false)
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
     }
-  }, [stopTone])
+  }, [stopTone, music])  // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (mode !== 'auto' || journeyComplete) return
@@ -71,6 +125,7 @@ export function ChakraJourney() {
           goToStep(currentIndex + 1)
         } else {
           stopTone()
+          music.stopSong()
           setJourneyComplete(true)
         }
       }
@@ -82,25 +137,49 @@ export function ChakraJourney() {
         timerRef.current = null
       }
     }
-  }, [mode, currentIndex, step.durationSeconds, goToStep, stopTone, journeyComplete])
+  }, [mode, currentIndex, step.durationSeconds, goToStep, stopTone, journeyComplete])  // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handlePlayPause = () => {
-    if (isPlaying) {
+  const handleToneToggle = () => {
+    if (!wantsTone) return
+    if (toneIsPlaying) {
       stopTone()
     } else {
       void playTone(step.frequencyHz)
     }
   }
 
+  const handleSongSelect = (file: string) => {
+    if (file === music.currentSong && music.isPlaying) {
+      music.pauseSong()
+    } else if (file === music.currentSong && !music.isPlaying) {
+      music.resumeSong()
+    } else {
+      music.playSong(file)
+    }
+  }
+
+  const handleNextSong = () => {
+    if (songs.length === 0) return
+    const currentIdx = songs.findIndex((s) => s.file === music.currentSong)
+    const nextIdx = (currentIdx + 1) % songs.length
+    music.playSong(songs[nextIdx].file)
+  }
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60)
-    const s = seconds % 60
+    const s = Math.floor(seconds % 60)
     return `${m}:${s.toString().padStart(2, '0')}`
   }
 
   const progress = step.durationSeconds > 0 ? elapsed / step.durationSeconds : 0
   const directionLabel = step.direction === 'ascending' ? 'Ascending' : 'Descending'
   const directionSymbol = step.direction === 'ascending' ? '↑' : '↓'
+
+  const currentSongTitle = useMemo(() => {
+    if (!music.currentSong) return null
+    const found = songs.find((s) => s.file === music.currentSong)
+    return found?.title ?? null
+  }, [music.currentSong, songs])
 
   if (mode === null) {
     return (
@@ -207,7 +286,7 @@ export function ChakraJourney() {
                   onClick={() => {
                     if (mode === 'manual' || isCurrent) {
                       goToStep(i)
-                      if (mode === 'manual' && isPlaying) {
+                      if (mode === 'manual' && toneIsPlaying) {
                         void playTone(journeySteps[i].frequencyHz)
                       }
                     }
@@ -342,56 +421,153 @@ export function ChakraJourney() {
                 ))}
               </div>
 
-              <div className="chakra-controls">
+              {/* Audio mode toggle */}
+              <div className="audio-mode-toggle" role="radiogroup" aria-label="Audio mode">
+                {(['tone', 'music', 'both'] as AudioMode[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    role="radio"
+                    aria-checked={audioMode === m}
+                    className={`audio-mode-toggle__btn ${audioMode === m ? 'audio-mode-toggle__btn--active' : ''}`}
+                    style={audioMode === m ? { background: step.color, boxShadow: `0 4px 16px ${step.color}66` } : {}}
+                    onClick={() => handleAudioModeChange(m)}
+                  >
+                    {m === 'tone' ? 'Tone Only' : m === 'music' ? 'Music Only' : 'Both'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tone control (when tone is active) */}
+              {wantsTone && (
                 <button
                   type="button"
-                  className="btn btn--primary"
-                  onClick={handlePlayPause}
-                  aria-pressed={isPlaying}
+                  className="btn btn--tone"
+                  onClick={handleToneToggle}
+                  aria-pressed={toneIsPlaying}
                   style={{
-                    background: step.color,
-                    color: '#fff',
-                    boxShadow: `0 12px 30px ${step.color}55`,
+                    borderColor: `${step.color}44`,
+                    color: step.color,
                   }}
                 >
-                  {mode === 'auto'
-                    ? (isPlaying ? 'Mute' : 'Unmute')
-                    : (isPlaying ? 'Pause Tone' : 'Play Tone')
-                  }
+                  {toneIsPlaying ? 'Mute Tone' : 'Play Tone'}
                 </button>
+              )}
 
-                <div className="chakra-controls__nav">
-                  <button
-                    type="button"
-                    className="btn btn--ghost"
-                    onClick={() => {
-                      goToStep(currentIndex - 1)
-                      if (mode === 'manual' && isPlaying) {
-                        void playTone(journeySteps[Math.max(0, currentIndex - 1)].frequencyHz)
-                      }
-                    }}
-                    disabled={currentIndex === 0}
-                  >
-                    &larr; Previous
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn--ghost"
-                    onClick={() => {
-                      if (currentIndex < totalSteps - 1) {
-                        goToStep(currentIndex + 1)
-                        if (mode === 'manual' && isPlaying) {
-                          void playTone(journeySteps[currentIndex + 1].frequencyHz)
-                        }
-                      } else {
-                        stopTone()
-                        setJourneyComplete(true)
-                      }
-                    }}
-                  >
-                    {currentIndex === totalSteps - 1 ? 'Complete' : 'Next'} &rarr;
-                  </button>
+              {/* Music playlist toggle */}
+              {wantsMusic && songs.length > 0 && (
+                <button
+                  type="button"
+                  className="btn btn--playlist-toggle"
+                  onClick={() => setShowPlaylist(!showPlaylist)}
+                  style={{ borderColor: `${step.color}33` }}
+                >
+                  {showPlaylist ? 'Hide Playlist' : `Playlist (${songs.length} songs)`}
+                </button>
+              )}
+
+              {/* Collapsible playlist */}
+              {wantsMusic && showPlaylist && songs.length > 0 && (
+                <div className="music-playlist" style={{ borderColor: `${step.color}22` }}>
+                  <div className="music-playlist__header">
+                    <span className="music-playlist__title">{step.name} Songs</span>
+                  </div>
+                  <div className="music-playlist__list">
+                    {songs.map((song) => {
+                      const isActive = music.currentSong === song.file
+                      return (
+                        <button
+                          key={song.file}
+                          type="button"
+                          className={`music-playlist__item ${isActive ? 'music-playlist__item--active' : ''}`}
+                          style={isActive ? { background: `${step.color}22`, borderColor: `${step.color}44` } : {}}
+                          onClick={() => handleSongSelect(song.file)}
+                        >
+                          <span className="music-playlist__item-icon" style={isActive ? { color: step.color } : {}}>
+                            {isActive && music.isPlaying ? '▮▮' : '▶'}
+                          </span>
+                          <span className="music-playlist__item-title">{song.title}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
+              )}
+
+              {/* Now playing bar */}
+              {wantsMusic && currentSongTitle && (
+                <div className="now-playing" style={{ borderColor: `${step.color}33`, background: `${step.color}0c` }}>
+                  <div className="now-playing__info">
+                    <span className="now-playing__label">Now Playing</span>
+                    <span className="now-playing__title">{currentSongTitle}</span>
+                  </div>
+                  <div className="now-playing__controls">
+                    <button
+                      type="button"
+                      className="now-playing__btn"
+                      style={{ color: step.color }}
+                      onClick={() => music.isPlaying ? music.pauseSong() : music.resumeSong()}
+                      aria-label={music.isPlaying ? 'Pause' : 'Play'}
+                    >
+                      {music.isPlaying ? '▮▮' : '▶'}
+                    </button>
+                    <button
+                      type="button"
+                      className="now-playing__btn"
+                      style={{ color: step.color }}
+                      onClick={handleNextSong}
+                      aria-label="Next song"
+                    >
+                      ▶▶
+                    </button>
+                  </div>
+                  <div className="now-playing__progress">
+                    <div
+                      className="now-playing__progress-fill"
+                      style={{
+                        width: music.duration > 0 ? `${(music.progress / music.duration) * 100}%` : '0%',
+                        backgroundColor: step.color,
+                      }}
+                    />
+                  </div>
+                  <div className="now-playing__time">
+                    {formatTime(music.progress)} / {formatTime(music.duration)}
+                  </div>
+                </div>
+              )}
+
+              <div className="chakra-controls__nav">
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() => {
+                    goToStep(currentIndex - 1)
+                    if (mode === 'manual' && toneIsPlaying) {
+                      void playTone(journeySteps[Math.max(0, currentIndex - 1)].frequencyHz)
+                    }
+                  }}
+                  disabled={currentIndex === 0}
+                >
+                  &larr; Previous
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() => {
+                    if (currentIndex < totalSteps - 1) {
+                      goToStep(currentIndex + 1)
+                      if (mode === 'manual' && toneIsPlaying) {
+                        void playTone(journeySteps[currentIndex + 1].frequencyHz)
+                      }
+                    } else {
+                      stopTone()
+                      music.stopSong()
+                      setJourneyComplete(true)
+                    }
+                  }}
+                >
+                  {currentIndex === totalSteps - 1 ? 'Complete' : 'Next'} &rarr;
+                </button>
               </div>
             </div>
           </section>

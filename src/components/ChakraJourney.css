@@ -601,6 +601,222 @@
   50% { transform: scale(1.08); opacity: 1; }
 }
 
+/* ── Audio mode toggle ─────────────────────────────── */
+
+.audio-mode-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  width: fit-content;
+}
+
+.audio-mode-toggle__btn {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s, box-shadow 0.25s;
+  white-space: nowrap;
+}
+
+.audio-mode-toggle__btn:hover {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.audio-mode-toggle__btn--active {
+  color: #fff;
+  border-radius: 999px;
+}
+
+/* ── Tone button ──────────────────────────────────── */
+
+.btn--tone {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  width: fit-content;
+}
+
+.btn--tone:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Playlist toggle button ───────────────────────── */
+
+.btn--playlist-toggle {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.45rem 0.95rem;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  width: fit-content;
+}
+
+.btn--playlist-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Music playlist ───────────────────────────────── */
+
+.music-playlist {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+
+.music-playlist__header {
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.music-playlist__title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.music-playlist__list {
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.music-playlist__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.85rem;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.82rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.music-playlist__item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.music-playlist__item--active {
+  color: #fff;
+  border-left: 2px solid currentColor;
+}
+
+.music-playlist__item-icon {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  width: 1.2rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.music-playlist__item-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Now playing bar ──────────────────────────────── */
+
+.now-playing {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.now-playing__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.now-playing__label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.now-playing__title {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.now-playing__controls {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.now-playing__btn {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.3rem 0.45rem;
+  border-radius: 999px;
+  transition: background 0.15s;
+  line-height: 1;
+}
+
+.now-playing__btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.now-playing__progress {
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.now-playing__progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s linear;
+}
+
+.now-playing__time {
+  width: 100%;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: right;
+}
+
 /* ── Responsive ────────────────────────────────────── */
 
 @media (max-width: 900px) {

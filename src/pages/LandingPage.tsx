@@ -89,6 +89,13 @@ export function LandingPage() {
           >
             Begin Chakra Tuning
           </button>
+          <button
+            type="button"
+            className="landing__btn landing__btn--hundred"
+            onClick={() => navigate('/auth')}
+          >
+            100-Day Challenge
+          </button>
         </div>
       </div>
     </div>
