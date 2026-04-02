@@ -19,6 +19,7 @@ export function ChakraJourney() {
   const [journeyComplete, setJourneyComplete] = useState(false)
   const [audioMode, setAudioMode] = useState<AudioMode>('tone')
   const [showPlaylist, setShowPlaylist] = useState(false)
+  const [previewChakraId, setPreviewChakraId] = useState<ChakraId>('root')
   const timerRef = useRef<number | null>(null)
   const elapsedRef = useRef(0)
   const prevChakraRef = useRef<ChakraId | null>(null)
@@ -27,22 +28,33 @@ export function ChakraJourney() {
   const music = useMusicPlayer()
 
   const step = useMemo(() => journeySteps[currentIndex], [currentIndex])
+  const previewSteps = useMemo(
+    () => journeySteps.filter((journeyStep) => journeyStep.direction === 'ascending'),
+    [],
+  )
+  const previewStep = useMemo(
+    () => previewSteps.find((journeyStep) => journeyStep.chakraId === previewChakraId) ?? previewSteps[0],
+    [previewChakraId, previewSteps],
+  )
   const songs = useMemo(() => chakraSongs[step.chakraId] ?? [], [step.chakraId])
+  const previewSongs = useMemo(() => chakraSongs[previewChakraId] ?? [], [previewChakraId])
+  const activeStep = mode === null ? previewStep : step
+  const activeSongs = mode === null ? previewSongs : songs
 
   const wantsTone = audioMode === 'tone' || audioMode === 'both'
   const wantsMusic = audioMode === 'music' || audioMode === 'both'
 
   useEffect(() => {
     const prev = prevChakraRef.current
-    prevChakraRef.current = step.chakraId
+    prevChakraRef.current = activeStep.chakraId
 
-    if (prev !== null && prev !== step.chakraId) {
+    if (prev !== null && prev !== activeStep.chakraId) {
       music.stopSong()
-      if (wantsMusic && songs.length > 0) {
-        music.playSong(songs[0].file)
+      if (wantsMusic && activeSongs.length > 0) {
+        music.playSong(activeSongs[0].file)
       }
     }
-  }, [step.chakraId, songs, wantsMusic])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeStep.chakraId, activeSongs, wantsMusic])  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAudioModeChange = (newMode: AudioMode) => {
     const oldWantsTone = audioMode === 'tone' || audioMode === 'both'
@@ -53,18 +65,18 @@ export function ChakraJourney() {
     if (oldWantsTone && !newWantsTone) {
       stopTone()
     }
-    if (!oldWantsTone && newWantsTone && mode) {
-      void playTone(step.frequencyHz)
+    if (!oldWantsTone && newWantsTone) {
+      void playTone(activeStep.frequencyHz)
     }
 
     if (oldWantsMusic && !newWantsMusic) {
       music.stopSong()
     }
-    if (!oldWantsMusic && newWantsMusic && mode) {
+    if (!oldWantsMusic && newWantsMusic) {
       if (music.currentSong) {
         music.resumeSong()
-      } else if (songs.length > 0) {
-        music.playSong(songs[0].file)
+      } else if (activeSongs.length > 0) {
+        music.playSong(activeSongs[0].file)
       }
     }
 
@@ -144,7 +156,7 @@ export function ChakraJourney() {
     if (toneIsPlaying) {
       stopTone()
     } else {
-      void playTone(step.frequencyHz)
+      void playTone(activeStep.frequencyHz)
     }
   }
 
@@ -159,10 +171,10 @@ export function ChakraJourney() {
   }
 
   const handleNextSong = () => {
-    if (songs.length === 0) return
-    const currentIdx = songs.findIndex((s) => s.file === music.currentSong)
-    const nextIdx = (currentIdx + 1) % songs.length
-    music.playSong(songs[nextIdx].file)
+    if (activeSongs.length === 0) return
+    const currentIdx = activeSongs.findIndex((song) => song.file === music.currentSong)
+    const nextIdx = (currentIdx + 1) % activeSongs.length
+    music.playSong(activeSongs[nextIdx].file)
   }
 
   const formatTime = (seconds: number) => {
@@ -177,9 +189,9 @@ export function ChakraJourney() {
 
   const currentSongTitle = useMemo(() => {
     if (!music.currentSong) return null
-    const found = songs.find((s) => s.file === music.currentSong)
+    const found = activeSongs.find((song) => song.file === music.currentSong)
     return found?.title ?? null
-  }, [music.currentSong, songs])
+  }, [music.currentSong, activeSongs])
 
   if (mode === null) {
     return (
@@ -192,10 +204,10 @@ export function ChakraJourney() {
           &larr; Home
         </button>
         <div className="journey-select__content">
-          <h1 className="journey-select__title">Choose Your Path</h1>
+          <h1 className="journey-select__title">Chakra Resonance Journey</h1>
           <p className="journey-select__desc">
             Auto mode plays each tone and advances every 4 minutes.<br />
-            Manual mode lets you control the pace.
+            Manual mode lets you control the pace. You can also preview each chakra's music below before you begin.
           </p>
           <div className="journey-select__buttons">
             <button
@@ -217,6 +229,141 @@ export function ChakraJourney() {
               <span className="journey-select__btn-sub">Move at your own pace</span>
             </button>
           </div>
+          <section
+            className="journey-select__preview"
+            style={{ borderColor: `${previewStep.color}33`, boxShadow: `0 20px 50px ${previewStep.color}18` }}
+          >
+            <div className="journey-select__preview-header">
+              <p className="journey-select__preview-eyebrow">Preview The Music</p>
+              <h2>{previewStep.name}</h2>
+              <p className="journey-select__preview-copy">
+                Choose a chakra to hear its songs before starting the full journey.
+              </p>
+            </div>
+
+            <div className="journey-select__chakra-tabs" aria-label="Choose a chakra to preview">
+              {previewSteps.map((journeyStep) => (
+                <button
+                  key={journeyStep.chakraId}
+                  type="button"
+                  className={`journey-select__chakra-tab ${previewChakraId === journeyStep.chakraId ? 'journey-select__chakra-tab--active' : ''}`}
+                  style={
+                    previewChakraId === journeyStep.chakraId
+                      ? { background: `${journeyStep.color}22`, borderColor: `${journeyStep.color}55`, color: '#fff' }
+                      : {}
+                  }
+                  onClick={() => setPreviewChakraId(journeyStep.chakraId)}
+                >
+                  <span className="journey-select__chakra-dot" style={{ backgroundColor: journeyStep.color }} />
+                  <span>{journeyStep.name}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="journey-select__preview-note">
+              <span>{previewStep.sanskritName}</span>
+              <span>{previewStep.note}</span>
+              <span>{Math.round(previewStep.frequencyHz)} Hz</span>
+            </div>
+
+            <div className="audio-mode-toggle" role="radiogroup" aria-label="Preview audio mode">
+              {(['tone', 'music', 'both'] as AudioMode[]).map((audioOption) => (
+                <button
+                  key={audioOption}
+                  type="button"
+                  role="radio"
+                  aria-checked={audioMode === audioOption}
+                  className={`audio-mode-toggle__btn ${audioMode === audioOption ? 'audio-mode-toggle__btn--active' : ''}`}
+                  style={
+                    audioMode === audioOption
+                      ? { background: previewStep.color, boxShadow: `0 4px 16px ${previewStep.color}66` }
+                      : {}
+                  }
+                  onClick={() => handleAudioModeChange(audioOption)}
+                >
+                  {audioOption === 'tone' ? 'Tone Only' : audioOption === 'music' ? 'Music Only' : 'Both'}
+                </button>
+              ))}
+            </div>
+
+            {wantsTone && (
+              <button
+                type="button"
+                className="btn btn--tone"
+                onClick={handleToneToggle}
+                aria-pressed={toneIsPlaying}
+                style={{ borderColor: `${previewStep.color}44`, color: previewStep.color }}
+              >
+                {toneIsPlaying ? 'Mute Tone' : 'Play Tone'}
+              </button>
+            )}
+
+            <div className="music-playlist journey-select__playlist" style={{ borderColor: `${previewStep.color}22` }}>
+              <div className="music-playlist__header">
+                <span className="music-playlist__title">{previewStep.name} Songs</span>
+              </div>
+              <div className="music-playlist__list">
+                {previewSongs.map((song) => {
+                  const isActive = music.currentSong === song.file
+                  return (
+                    <button
+                      key={song.file}
+                      type="button"
+                      className={`music-playlist__item ${isActive ? 'music-playlist__item--active' : ''}`}
+                      style={isActive ? { background: `${previewStep.color}22`, borderColor: `${previewStep.color}44` } : {}}
+                      onClick={() => handleSongSelect(song.file)}
+                    >
+                      <span className="music-playlist__item-icon" style={isActive ? { color: previewStep.color } : {}}>
+                        {isActive && music.isPlaying ? '▮▮' : '▶'}
+                      </span>
+                      <span className="music-playlist__item-title">{song.title}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {wantsMusic && currentSongTitle && (
+              <div className="now-playing" style={{ borderColor: `${previewStep.color}33`, background: `${previewStep.color}0c` }}>
+                <div className="now-playing__info">
+                  <span className="now-playing__label">Now Playing</span>
+                  <span className="now-playing__title">{currentSongTitle}</span>
+                </div>
+                <div className="now-playing__controls">
+                  <button
+                    type="button"
+                    className="now-playing__btn"
+                    style={{ color: previewStep.color }}
+                    onClick={() => (music.isPlaying ? music.pauseSong() : music.resumeSong())}
+                    aria-label={music.isPlaying ? 'Pause' : 'Play'}
+                  >
+                    {music.isPlaying ? '▮▮' : '▶'}
+                  </button>
+                  <button
+                    type="button"
+                    className="now-playing__btn"
+                    style={{ color: previewStep.color }}
+                    onClick={handleNextSong}
+                    aria-label="Next song"
+                  >
+                    ▶▶
+                  </button>
+                </div>
+                <div className="now-playing__progress">
+                  <div
+                    className="now-playing__progress-fill"
+                    style={{
+                      width: music.duration > 0 ? `${(music.progress / music.duration) * 100}%` : '0%',
+                      backgroundColor: previewStep.color,
+                    }}
+                  />
+                </div>
+                <div className="now-playing__time">
+                  {formatTime(music.progress)} / {formatTime(music.duration)}
+                </div>
+              </div>
+            )}
+          </section>
         </div>
       </div>
     )

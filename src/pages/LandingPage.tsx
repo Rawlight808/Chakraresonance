@@ -69,9 +69,9 @@ export function LandingPage() {
           <div className="landing__orb-inner" />
         </div>
 
-        <h1 className="landing__title">Chakra Journey</h1>
+        <h1 className="landing__title">Chakra Resonance</h1>
         <p className="landing__subtitle">
-          Align your energy centers through sound, color, singing and more
+          Align your energy centers through sound, color, singing, and resonance
         </p>
 
         <div className="landing__actions">
