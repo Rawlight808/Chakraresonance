@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { journeySteps, totalSteps } from '../data/chakras'
 import type { ChakraId } from '../data/chakras'
@@ -163,6 +164,14 @@ export function ChakraJourney() {
     const currentIdx = songs.findIndex((song) => song.file === music.currentSong)
     const nextIdx = (currentIdx + 1) % songs.length
     music.playSong(songs[nextIdx].file)
+  }
+
+  const handleSeek = (event: MouseEvent<HTMLButtonElement>) => {
+    if (music.duration <= 0) return
+
+    const rect = event.currentTarget.getBoundingClientRect()
+    const clickRatio = (event.clientX - rect.left) / rect.width
+    music.seekTo(clickRatio * music.duration)
   }
 
   const formatTime = (seconds: number) => {
@@ -462,7 +471,7 @@ export function ChakraJourney() {
                   onClick={() => setShowPlaylist(!showPlaylist)}
                   style={{ borderColor: `${step.color}33` }}
                 >
-                  {showPlaylist ? 'Hide Playlist' : `Playlist (${songs.length} songs)`}
+                  {showPlaylist ? 'Hide Playlist' : `${step.name} Playlist (${songs.length} songs)`}
                 </button>
               )}
 
@@ -521,7 +530,12 @@ export function ChakraJourney() {
                       ▶▶
                     </button>
                   </div>
-                  <div className="now-playing__progress">
+                  <button
+                    type="button"
+                    className="now-playing__progress"
+                    onClick={handleSeek}
+                    aria-label="Seek within song"
+                  >
                     <div
                       className="now-playing__progress-fill"
                       style={{
@@ -529,7 +543,7 @@ export function ChakraJourney() {
                         backgroundColor: step.color,
                       }}
                     />
-                  </div>
+                  </button>
                   <div className="now-playing__time">
                     {formatTime(music.progress)} / {formatTime(music.duration)}
                   </div>

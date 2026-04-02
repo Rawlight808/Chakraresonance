@@ -801,12 +801,19 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+  display: block;
+  text-align: left;
 }
 
 .now-playing__progress-fill {
   height: 100%;
   border-radius: 999px;
   transition: width 0.3s linear;
+  pointer-events: none;
 }
 
 .now-playing__time {

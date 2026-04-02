@@ -4,6 +4,7 @@ export interface MusicPlayerState {
   playSong: (url: string) => void
   pauseSong: () => void
   resumeSong: () => void
+  seekTo: (timeSeconds: number) => void
   stopSong: () => void
   isPlaying: boolean
   currentSong: string | null
@@ -84,6 +85,16 @@ export function useMusicPlayer(): MusicPlayerState {
     }
   }, [currentSong, updateProgress])
 
+  const seekTo = useCallback((timeSeconds: number) => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    const nextTime = Math.min(Math.max(timeSeconds, 0), audio.duration || 0)
+    audio.currentTime = nextTime
+    setProgress(nextTime)
+    setDuration(audio.duration || 0)
+  }, [])
+
   const stopSong = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause()
@@ -107,5 +118,5 @@ export function useMusicPlayer(): MusicPlayerState {
     }
   }, [stopProgressLoop])
 
-  return { playSong, pauseSong, resumeSong, stopSong, isPlaying, currentSong, progress, duration }
+  return { playSong, pauseSong, resumeSong, seekTo, stopSong, isPlaying, currentSong, progress, duration }
 }
