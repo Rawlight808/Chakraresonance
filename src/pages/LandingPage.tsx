@@ -71,7 +71,7 @@ export function LandingPage() {
 
         <h1 className="landing__title">Chakra Resonance</h1>
         <p className="landing__subtitle">
-          Align your energy centers through sound, color, singing, and resonance
+          Align your energy centers through sound, color, aromas, and singing through the principle of resonance.
         </p>
 
         <div className="landing__actions">
@@ -88,13 +88,6 @@ export function LandingPage() {
             onClick={() => navigate('/journey')}
           >
             Begin Chakra Tuning
-          </button>
-          <button
-            type="button"
-            className="landing__btn landing__btn--hundred"
-            onClick={() => navigate('/auth')}
-          >
-            100-Day Challenge
           </button>
         </div>
       </div>
