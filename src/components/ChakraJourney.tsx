@@ -391,7 +391,14 @@ export function ChakraJourney() {
           <section className="chakra-layout">
             {/* Left column: orb + body */}
             <div className="chakra-visual">
-              <div className="chakra-visual__glow" style={{ boxShadow: `0 0 40px ${step.color}40, 0 0 80px ${step.color}20` }}>
+              <button
+                type="button"
+                className="chakra-visual__glow"
+                onClick={handleToneToggle}
+                aria-label={toneIsPlaying ? `Mute ${step.name} tone` : `Play ${step.name} tone`}
+                aria-pressed={toneIsPlaying}
+                style={{ boxShadow: `0 0 40px ${step.color}40, 0 0 80px ${step.color}20` }}
+              >
                 <div
                   className="chakra-visual__core"
                   style={{
@@ -400,7 +407,7 @@ export function ChakraJourney() {
                     transition: 'background-color 1s ease, box-shadow 1s ease',
                   }}
                 />
-              </div>
+              </button>
 
               <div className="chakra-vowel">
                 <span className="chakra-vowel__label">Sing</span>
@@ -468,7 +475,7 @@ export function ChakraJourney() {
                     style={audioMode === m ? { background: step.color, boxShadow: `0 4px 16px ${step.color}66` } : {}}
                     onClick={() => handleAudioModeChange(m)}
                   >
-                    {m === 'tone' ? 'Tone Only' : m === 'music' ? 'Music Only' : 'Both'}
+                    {m === 'tone' ? 'Tone Only' : m === 'music' ? 'Music Only' : 'Music and Tone'}
                   </button>
                 ))}
               </div>
