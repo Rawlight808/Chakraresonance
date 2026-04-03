@@ -18,8 +18,8 @@ export function ChakraJourney() {
   const [mode, setMode] = useState<JourneyMode>(null)
   const [elapsed, setElapsed] = useState(0)
   const [journeyComplete, setJourneyComplete] = useState(false)
-  const [audioMode, setAudioMode] = useState<AudioMode>('tone')
-  const [showPlaylist, setShowPlaylist] = useState(false)
+  const [audioMode, setAudioMode] = useState<AudioMode>('both')
+  const [showPlaylist, setShowPlaylist] = useState(true)
   const timerRef = useRef<number | null>(null)
   const elapsedRef = useRef(0)
   const prevChakraRef = useRef<ChakraId | null>(null)
@@ -32,6 +32,7 @@ export function ChakraJourney() {
 
   const wantsTone = audioMode === 'tone' || audioMode === 'both'
   const wantsMusic = audioMode === 'music' || audioMode === 'both'
+  const hasSongs = songs.length > 0
 
   useEffect(() => {
     const prev = prevChakraRef.current
@@ -90,6 +91,7 @@ export function ChakraJourney() {
     setCurrentIndex(0)
     setElapsed(0)
     setJourneyComplete(false)
+    setShowPlaylist(true)
     prevChakraRef.current = journeySteps[0].chakraId
 
     if (selectedMode === 'auto' && wantsTone) {
@@ -149,7 +151,13 @@ export function ChakraJourney() {
     }
   }
 
+  const enableMusicMode = () => {
+    if (wantsMusic) return
+    handleAudioModeChange(toneIsPlaying ? 'both' : 'music')
+  }
+
   const handleSongSelect = (file: string) => {
+    enableMusicMode()
     if (file === music.currentSong && music.isPlaying) {
       music.pauseSong()
     } else if (file === music.currentSong && !music.isPlaying) {
@@ -161,9 +169,27 @@ export function ChakraJourney() {
 
   const handleNextSong = () => {
     if (songs.length === 0) return
+    enableMusicMode()
     const currentIdx = songs.findIndex((song) => song.file === music.currentSong)
     const nextIdx = (currentIdx + 1) % songs.length
     music.playSong(songs[nextIdx].file)
+  }
+
+  const handleMusicPlayPause = () => {
+    if (songs.length === 0) return
+
+    enableMusicMode()
+
+    if (!music.currentSong) {
+      music.playSong(songs[0].file)
+      return
+    }
+
+    if (music.isPlaying) {
+      music.pauseSong()
+    } else {
+      music.resumeSong()
+    }
   }
 
   const handleSeek = (event: MouseEvent<HTMLButtonElement>) => {
@@ -464,19 +490,19 @@ export function ChakraJourney() {
               )}
 
               {/* Music playlist toggle */}
-              {wantsMusic && songs.length > 0 && (
+              {hasSongs && (
                 <button
                   type="button"
                   className="btn btn--playlist-toggle"
                   onClick={() => setShowPlaylist(!showPlaylist)}
                   style={{ borderColor: `${step.color}33` }}
                 >
-                  {showPlaylist ? 'Hide Playlist' : `${step.name} Playlist (${songs.length} songs)`}
+                  {showPlaylist ? `Hide ${step.name} Playlist` : `${step.name} Playlist (${songs.length} songs)`}
                 </button>
               )}
 
               {/* Collapsible playlist */}
-              {wantsMusic && showPlaylist && songs.length > 0 && (
+              {showPlaylist && hasSongs && (
                 <div className="music-playlist" style={{ borderColor: `${step.color}22` }}>
                   <div className="music-playlist__header">
                     <span className="music-playlist__title">{step.name} Songs</span>
@@ -504,18 +530,20 @@ export function ChakraJourney() {
               )}
 
               {/* Now playing bar */}
-              {wantsMusic && currentSongTitle && (
+              {hasSongs && (
                 <div className="now-playing" style={{ borderColor: `${step.color}33`, background: `${step.color}0c` }}>
                   <div className="now-playing__info">
                     <span className="now-playing__label">Now Playing</span>
-                    <span className="now-playing__title">{currentSongTitle}</span>
+                    <span className="now-playing__title">
+                      {currentSongTitle ?? `Select a song from the ${step.name.toLowerCase()} playlist`}
+                    </span>
                   </div>
                   <div className="now-playing__controls">
                     <button
                       type="button"
                       className="now-playing__btn"
                       style={{ color: step.color }}
-                      onClick={() => music.isPlaying ? music.pauseSong() : music.resumeSong()}
+                      onClick={handleMusicPlayPause}
                       aria-label={music.isPlaying ? 'Pause' : 'Play'}
                     >
                       {music.isPlaying ? '▮▮' : '▶'}
@@ -534,7 +562,8 @@ export function ChakraJourney() {
                     type="button"
                     className="now-playing__progress"
                     onClick={handleSeek}
-                    aria-label="Seek within song"
+                    aria-label={music.duration > 0 ? 'Seek within song' : 'Song progress'}
+                    disabled={music.duration <= 0}
                   >
                     <div
                       className="now-playing__progress-fill"
