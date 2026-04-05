@@ -684,6 +684,46 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* ── Full-screen color mode ───────────────────────── */
+
+.btn--color-screen {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.5rem 1rem;
+  font-size: 0.84rem;
+  background: rgba(0, 0, 0, 0.24);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  width: fit-content;
+}
+
+.btn--color-screen:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.journey-color-immersion {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  border: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.journey-color-immersion span {
+  margin: 0 0 2.2rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+}
+
 /* ── Music playlist ───────────────────────────────── */
 
 .music-playlist {

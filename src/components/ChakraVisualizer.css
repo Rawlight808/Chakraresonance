@@ -426,13 +426,18 @@
 
 .chakra-visualizer__expandable {
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
 }
 
 .chakra-visualizer__expand-panel {
   display: grid;
   grid-template-rows: 0fr;
-  margin-top: 0.8rem;
+  margin-top: 0.2rem;
   transition: grid-template-rows 220ms ease;
+  width: 100%;
 }
 
 .chakra-visualizer__expand-panel p {
@@ -462,6 +467,36 @@
   background: linear-gradient(180deg, rgba(16, 20, 40, 0.98), rgba(10, 12, 26, 0.98));
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.44);
   animation: chakraSheetUp 280ms ease;
+}
+
+.chakra-visualizer__color-immersion {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: background-color 240ms ease;
+}
+
+.chakra-visualizer__color-hint {
+  margin: 0 0 2.2rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.chakra-visualizer__color-hint--visible {
+  opacity: 1;
 }
 
 @keyframes chakraVisualizerIntro {

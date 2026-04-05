@@ -20,6 +20,7 @@ export function ChakraJourney() {
   const [journeyComplete, setJourneyComplete] = useState(false)
   const [audioMode, setAudioMode] = useState<AudioMode>('both')
   const [showPlaylist, setShowPlaylist] = useState(true)
+  const [isColorImmersionOpen, setIsColorImmersionOpen] = useState(false)
   const timerRef = useRef<number | null>(null)
   const elapsedRef = useRef(0)
   const prevChakraRef = useRef<ChakraId | null>(null)
@@ -102,6 +103,7 @@ export function ChakraJourney() {
   const exitJourney = useCallback(() => {
     stopTone()
     music.stopSong()
+    setIsColorImmersionOpen(false)
     setMode(null)
     setCurrentIndex(0)
     setElapsed(0)
@@ -141,6 +143,21 @@ export function ChakraJourney() {
       }
     }
   }, [mode, currentIndex, step.durationSeconds, goToStep, stopTone, journeyComplete])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!isColorImmersionOpen) return
+
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsColorImmersionOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => {
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [isColorImmersionOpen])
 
   const handleToneToggle = () => {
     if (!wantsTone) return
@@ -463,6 +480,15 @@ export function ChakraJourney() {
                 ))}
               </div>
 
+              <button
+                type="button"
+                className="btn btn--color-screen"
+                onClick={() => setIsColorImmersionOpen(true)}
+                style={{ borderColor: `${step.color}44`, color: step.color }}
+              >
+                View Full-Screen {step.name} Color
+              </button>
+
               {/* Audio mode toggle */}
               <div className="audio-mode-toggle" role="radiogroup" aria-label="Audio mode">
                 {(['tone', 'music', 'both'] as AudioMode[]).map((m) => (
@@ -623,6 +649,18 @@ export function ChakraJourney() {
           </section>
         </main>
       </div>
+
+      {isColorImmersionOpen && (
+        <button
+          type="button"
+          className="journey-color-immersion"
+          style={{ backgroundColor: step.color }}
+          onClick={() => setIsColorImmersionOpen(false)}
+          aria-label={`Close ${step.name} full-screen color`}
+        >
+          <span>Tap or click anywhere to close</span>
+        </button>
+      )}
     </div>
   )
 }

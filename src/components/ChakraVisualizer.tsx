@@ -11,6 +11,7 @@ type ChakraDetailsPanelProps = {
   panelId: string
   descriptionId: string
   onToggleExpand: () => void
+  onOpenColorImmersion: () => void
   onClose?: () => void
 }
 
@@ -20,6 +21,7 @@ function ChakraDetailsPanel({
   panelId,
   descriptionId,
   onToggleExpand,
+  onOpenColorImmersion,
   onClose,
 }: ChakraDetailsPanelProps) {
   return (
@@ -69,6 +71,14 @@ function ChakraDetailsPanel({
         <button
           type="button"
           className="chakra-visualizer__expand-btn"
+          onClick={onOpenColorImmersion}
+        >
+          View Full-Screen {chakra.colorLabel}
+        </button>
+
+        <button
+          type="button"
+          className="chakra-visualizer__expand-btn"
           onClick={onToggleExpand}
           aria-expanded={expanded}
           aria-controls={descriptionId}
@@ -107,6 +117,8 @@ export function ChakraVisualizer() {
     return window.matchMedia('(max-width: 900px)').matches
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isColorImmersionOpen, setIsColorImmersionOpen] = useState(false)
+  const [isColorHintVisible, setIsColorHintVisible] = useState(false)
   const chakraButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const titleId = useId()
   const panelId = useId()
@@ -186,6 +198,26 @@ export function ChakraVisualizer() {
     }
   }, [isDialogOpen])
 
+  useEffect(() => {
+    if (!isColorImmersionOpen) return
+
+    const hintTimer = window.setTimeout(() => {
+      setIsColorHintVisible(false)
+    }, 2000)
+
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsColorImmersionOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => {
+      window.clearTimeout(hintTimer)
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [isColorImmersionOpen])
+
   const selectChakra = useCallback(
     (chakraId: ChakraId, shouldOpenDialog = false) => {
       setActiveId(chakraId)
@@ -252,6 +284,11 @@ export function ChakraVisualizer() {
         break
     }
   }
+
+  const openColorImmersion = useCallback(() => {
+    setIsColorHintVisible(true)
+    setIsColorImmersionOpen(true)
+  }, [])
 
   return (
     <section className="chakra-visualizer" aria-labelledby={titleId}>
@@ -407,6 +444,7 @@ export function ChakraVisualizer() {
             panelId={panelId}
             descriptionId={descriptionId}
             onToggleExpand={() => toggleExpanded(activeChakra.id)}
+            onOpenColorImmersion={openColorImmersion}
           />
         </aside>
       </div>
@@ -430,10 +468,30 @@ export function ChakraVisualizer() {
               panelId={`${panelId}-mobile`}
               descriptionId={`${descriptionId}-mobile`}
               onToggleExpand={() => toggleExpanded(activeChakra.id)}
+              onOpenColorImmersion={openColorImmersion}
               onClose={() => setIsDialogOpen(false)}
             />
           </div>
         </div>
+      ) : null}
+
+      {isColorImmersionOpen ? (
+        <button
+          type="button"
+          className="chakra-visualizer__color-immersion"
+          style={{ backgroundColor: activeChakra.color }}
+          aria-label={`Close ${activeChakra.colorLabel} full-screen color`}
+          onClick={() => setIsColorImmersionOpen(false)}
+        >
+          <span
+            className={[
+              'chakra-visualizer__color-hint',
+              isColorHintVisible ? 'chakra-visualizer__color-hint--visible' : '',
+            ].join(' ').trim()}
+          >
+            Tap or click anywhere to close
+          </span>
+        </button>
       ) : null}
     </section>
   )
