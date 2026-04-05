@@ -37,7 +37,7 @@
 }
 
 .learn__content {
-  max-width: 720px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 3rem 2rem 5rem;
 }
@@ -61,6 +61,10 @@
   color: rgba(255, 255, 255, 0.6);
   max-width: 560px;
   margin: 0 auto;
+}
+
+.learn__visualizer {
+  margin: 0 0 3rem;
 }
 
 .learn__section {
@@ -217,6 +221,7 @@
 
 @media (max-width: 640px) {
   .learn__content {
+    max-width: 100%;
     padding: 2rem 1.25rem 4rem;
   }
 

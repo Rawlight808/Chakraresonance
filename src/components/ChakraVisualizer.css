@@ -1,0 +1,613 @@
+.chakra-visualizer {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background:
+    radial-gradient(circle at top, rgba(162, 126, 255, 0.18), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(89, 183, 255, 0.14), transparent 28%),
+    linear-gradient(160deg, rgba(8, 12, 28, 0.92), rgba(13, 16, 34, 0.9), rgba(6, 8, 20, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 24px 64px rgba(0, 0, 0, 0.4);
+}
+
+.chakra-visualizer::before {
+  content: '';
+  position: absolute;
+  inset: 1rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+.chakra-visualizer__header,
+.chakra-visualizer__figure-card,
+.chakra-visualizer__panel {
+  position: relative;
+  z-index: 1;
+  animation: chakraVisualizerIntro 900ms ease both;
+}
+
+.chakra-visualizer__panel {
+  animation-delay: 120ms;
+}
+
+.chakra-visualizer__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(216, 223, 255, 0.65);
+}
+
+.chakra-visualizer__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  align-items: end;
+}
+
+.chakra-visualizer__header h2 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  line-height: 1.15;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: #f8f8ff;
+}
+
+.chakra-visualizer__intro {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(221, 226, 255, 0.74);
+}
+
+.chakra-visualizer__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.chakra-visualizer__figure-card,
+.chakra-visualizer__panel {
+  min-height: 100%;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(10, 14, 28, 0.72);
+  backdrop-filter: blur(18px);
+}
+
+.chakra-visualizer__figure-card {
+  position: relative;
+  padding: 1rem 1rem 1.2rem;
+}
+
+.chakra-visualizer__sky {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(213, 136, 255, 0.16), transparent 20%),
+    radial-gradient(circle at 35% 58%, rgba(103, 231, 143, 0.12), transparent 18%),
+    radial-gradient(circle at 72% 32%, rgba(89, 183, 255, 0.12), transparent 18%);
+  filter: blur(10px);
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.chakra-visualizer__figure {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+  padding: 0.5rem 0;
+}
+
+.chakra-visualizer__body-map {
+  position: relative;
+  width: min(100%, 520px);
+  aspect-ratio: 1 / 1;
+}
+
+.chakra-visualizer__flow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.chakra-visualizer__flow-track {
+  fill: none;
+  stroke: rgba(220, 228, 255, 0.16);
+  stroke-width: 1.8;
+}
+
+.chakra-visualizer__flow-front,
+.chakra-visualizer__flow-back {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 8 10;
+}
+
+.chakra-visualizer__flow-front {
+  filter: drop-shadow(0 0 7px rgba(176, 120, 255, 0.34));
+  animation: chakraFlowForward 7s linear infinite;
+}
+
+.chakra-visualizer__flow-back {
+  opacity: 0.72;
+  filter: drop-shadow(0 0 6px rgba(108, 184, 255, 0.28));
+  animation: chakraFlowBackward 7s linear infinite;
+}
+
+.chakra-visualizer__flow-pulse {
+  opacity: 0.9;
+}
+
+.chakra-visualizer__flow-pulse--front {
+  fill: #ffc6ff;
+  filter: drop-shadow(0 0 6px rgba(255, 191, 255, 0.85));
+}
+
+.chakra-visualizer__flow-pulse--back {
+  fill: #a8d2ff;
+  filter: drop-shadow(0 0 6px rgba(168, 210, 255, 0.8));
+}
+
+.chakra-visualizer__body-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 22px rgba(122, 152, 255, 0.2));
+  opacity: 0.95;
+  position: relative;
+  z-index: 0;
+}
+
+.chakra-visualizer__node {
+  --node-size: 1.3rem;
+  position: absolute;
+  left: 50%;
+  top: var(--chakra-y);
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition:
+    transform 220ms ease,
+    filter 220ms ease,
+    opacity 220ms ease;
+  z-index: 2;
+}
+
+.chakra-visualizer__node:hover,
+.chakra-visualizer__node:focus-visible {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.chakra-visualizer__node:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.78);
+  outline-offset: 4px;
+}
+
+.chakra-visualizer__node-ring,
+.chakra-visualizer__node-core {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.chakra-visualizer__node-ring {
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--chakra-color) 80%, white 20%);
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--chakra-color) 60%, transparent),
+    inset 0 0 18px color-mix(in srgb, var(--chakra-color) 30%, transparent);
+  animation: chakraHaloPulse 4.8s ease-in-out infinite;
+}
+
+.chakra-visualizer__node-core {
+  width: var(--node-size);
+  height: var(--node-size);
+  background: radial-gradient(circle at 35% 30%, #ffffff, var(--chakra-color) 55%, #000000 140%);
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--chakra-color) 82%, white 18%),
+    0 0 40px color-mix(in srgb, var(--chakra-color) 62%, transparent);
+  animation: chakraCorePulse 3.8s ease-in-out infinite;
+}
+
+.chakra-visualizer__node-label {
+  position: absolute;
+  left: calc(100% + 0.8rem);
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 7rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.9rem;
+  background: rgba(10, 14, 30, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: left;
+  color: rgba(247, 248, 255, 0.94);
+  opacity: 0.78;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.chakra-visualizer__node-label span {
+  display: block;
+  margin-top: 0.22rem;
+  font-size: 0.74rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: rgba(216, 223, 255, 0.62);
+}
+
+.chakra-visualizer__node:nth-of-type(even) .chakra-visualizer__node-label {
+  left: auto;
+  right: calc(100% + 0.8rem);
+  text-align: right;
+}
+
+.chakra-visualizer__node:hover .chakra-visualizer__node-label,
+.chakra-visualizer__node:focus-visible .chakra-visualizer__node-label,
+.chakra-visualizer__node--active .chakra-visualizer__node-label {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.chakra-visualizer__node--active {
+  filter: brightness(1.2);
+}
+
+.chakra-visualizer__node--active .chakra-visualizer__node-ring {
+  animation-duration: 2.5s;
+  transform: scale(1.16);
+}
+
+.chakra-visualizer__node--active .chakra-visualizer__node-core {
+  animation-duration: 2.2s;
+  transform: scale(1.18);
+}
+
+.chakra-visualizer__rail {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.chakra-visualizer__rail-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(236, 239, 255, 0.78);
+  cursor: pointer;
+  transition:
+    transform 200ms ease,
+    background 200ms ease,
+    border-color 200ms ease;
+}
+
+.chakra-visualizer__rail-item:hover,
+.chakra-visualizer__rail-item:focus-visible,
+.chakra-visualizer__rail-item--active {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--chakra-color) 18%, rgba(255, 255, 255, 0.03));
+  border-color: color-mix(in srgb, var(--chakra-color) 42%, rgba(255, 255, 255, 0.08));
+}
+
+.chakra-visualizer__rail-item:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 3px;
+}
+
+.chakra-visualizer__rail-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--chakra-color);
+  box-shadow: 0 0 10px var(--chakra-color);
+}
+
+.chakra-visualizer__panel {
+  padding: 1.25rem;
+}
+
+.chakra-visualizer__details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chakra-visualizer__details-top {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.chakra-visualizer__details-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 400;
+  color: #fafaff;
+}
+
+.chakra-visualizer__details-subtitle {
+  margin: 0.22rem 0 0;
+  color: rgba(213, 220, 255, 0.72);
+  font-size: 1rem;
+}
+
+.chakra-visualizer__close,
+.chakra-visualizer__expand-btn {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(244, 246, 255, 0.9);
+  cursor: pointer;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.chakra-visualizer__close {
+  padding: 0.65rem 0.9rem;
+}
+
+.chakra-visualizer__expand-btn {
+  width: fit-content;
+  padding: 0.75rem 1rem;
+}
+
+.chakra-visualizer__close:hover,
+.chakra-visualizer__expand-btn:hover,
+.chakra-visualizer__close:focus-visible,
+.chakra-visualizer__expand-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.chakra-visualizer__meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.chakra-visualizer__meta-card,
+.chakra-visualizer__meaning,
+.chakra-visualizer__expandable {
+  border-radius: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1rem;
+}
+
+.chakra-visualizer__meta-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(201, 210, 255, 0.6);
+}
+
+.chakra-visualizer__meta-value,
+.chakra-visualizer__meaning p,
+.chakra-visualizer__expand-panel p {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.75;
+  color: rgba(240, 243, 255, 0.88);
+}
+
+.chakra-visualizer__expandable {
+  overflow: hidden;
+}
+
+.chakra-visualizer__expand-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: 0.8rem;
+  transition: grid-template-rows 220ms ease;
+}
+
+.chakra-visualizer__expand-panel p {
+  overflow: hidden;
+}
+
+.chakra-visualizer__expand-panel--open {
+  grid-template-rows: 1fr;
+}
+
+.chakra-visualizer__dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(4, 6, 14, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+.chakra-visualizer__dialog {
+  width: min(100%, 34rem);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(16, 20, 40, 0.98), rgba(10, 12, 26, 0.98));
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.44);
+  animation: chakraSheetUp 280ms ease;
+}
+
+@keyframes chakraVisualizerIntro {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chakraHaloPulse {
+  0%,
+  100% {
+    opacity: 0.74;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes chakraCorePulse {
+  0%,
+  100% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.14);
+  }
+}
+
+@keyframes chakraFlowForward {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: -72;
+  }
+}
+
+@keyframes chakraFlowBackward {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: 72;
+  }
+}
+
+@keyframes chakraSheetUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1100px) {
+  .chakra-visualizer__header {
+    grid-template-columns: 1fr;
+  }
+
+  .chakra-visualizer__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .chakra-visualizer__panel {
+    order: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .chakra-visualizer__panel {
+    display: none;
+  }
+
+  .chakra-visualizer__body-map {
+    width: min(100%, 470px);
+  }
+}
+
+@media (max-width: 640px) {
+  .chakra-visualizer {
+    padding: 1rem;
+    border-radius: 1.5rem;
+  }
+
+  .chakra-visualizer__figure-card {
+    padding: 0.85rem 0.75rem 1rem;
+  }
+
+  .chakra-visualizer__body-map {
+    width: min(100%, 360px);
+  }
+
+  .chakra-visualizer__node {
+    width: 3.7rem;
+    height: 3.7rem;
+  }
+
+  .chakra-visualizer__node-label {
+    min-width: auto;
+    max-width: 6.25rem;
+    padding: 0.45rem 0.55rem;
+    font-size: 0.74rem;
+  }
+
+  .chakra-visualizer__node-label span {
+    font-size: 0.65rem;
+  }
+
+  .chakra-visualizer__meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chakra-visualizer__details-title {
+    font-size: 1.55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chakra-visualizer *,
+  .chakra-visualizer::before,
+  .chakra-visualizer::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .chakra-visualizer__flow-pulse {
+    display: none;
+  }
+}

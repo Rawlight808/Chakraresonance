@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { ChakraVisualizer } from '../components/ChakraVisualizer'
 import './LearnPage.css'
 
 const chakraEndocrineMap = [
@@ -42,6 +43,10 @@ export function LearnPage() {
             influence how you feel, think, and connect with the world around you.
           </p>
         </header>
+
+        <section className="learn__visualizer">
+          <ChakraVisualizer />
+        </section>
 
         {/* What are chakras */}
         <section className="learn__section">
