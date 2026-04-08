@@ -8,13 +8,17 @@ type TonePlayer = {
   playTone: (frequencyHz: number) => Promise<void>
   stopTone: () => void
   crossfadeTo: (frequencyHz: number) => Promise<void>
+  setVolume: (nextVolume: number) => void
   isPlaying: boolean
   currentFrequency: number | null
+  volume: number
 }
 
 const FADE_IN = 0.4
 const FADE_OUT = 0.3
 const CROSSFADE = 0.8
+const MAX_GAIN = 0.35
+const DEFAULT_VOLUME = 0.75
 
 export function useTonePlayer(): TonePlayer {
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -22,9 +26,13 @@ export function useTonePlayer(): TonePlayer {
   const gainNodeRef = useRef<GainNode | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentFrequency, setCurrentFrequency] = useState<number | null>(null)
+  const [volume, setVolumeState] = useState(DEFAULT_VOLUME)
+  const volumeRef = useRef(DEFAULT_VOLUME)
 
-  const getContext = async () => {
-    if (!audioContextRef.current) {
+  const getTargetGain = useCallback((v: number) => MAX_GAIN * v, [])
+
+  const getContext = useCallback(async () => {
+    if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
       const AudioContextClass =
         window.AudioContext || (window as unknown as WindowWithWebkitAudio).webkitAudioContext
       audioContextRef.current = new AudioContextClass()
@@ -35,7 +43,7 @@ export function useTonePlayer(): TonePlayer {
     }
 
     return audioContextRef.current
-  }
+  }, [])
 
   const stopTone = useCallback(() => {
     const ctx = audioContextRef.current
@@ -55,6 +63,25 @@ export function useTonePlayer(): TonePlayer {
     setIsPlaying(false)
     setCurrentFrequency(null)
   }, [])
+
+  const setVolume = useCallback(
+    (nextVolume: number) => {
+      const normalizedVolume = Math.max(0, Math.min(1, nextVolume))
+      volumeRef.current = normalizedVolume
+      setVolumeState(normalizedVolume)
+
+      const ctx = audioContextRef.current
+      const gainNode = gainNodeRef.current
+
+      if (ctx && gainNode) {
+        const now = ctx.currentTime
+        gainNode.gain.cancelScheduledValues(now)
+        gainNode.gain.setValueAtTime(gainNode.gain.value, now)
+        gainNode.gain.linearRampToValueAtTime(getTargetGain(normalizedVolume), now + 0.12)
+      }
+    },
+    [getTargetGain],
+  )
 
   const playTone = useCallback(
     async (frequencyHz: number) => {
@@ -76,7 +103,7 @@ export function useTonePlayer(): TonePlayer {
 
       const now = ctx.currentTime
       gainNode.gain.setValueAtTime(0, now)
-      gainNode.gain.linearRampToValueAtTime(0.35, now + FADE_IN)
+      gainNode.gain.linearRampToValueAtTime(getTargetGain(volumeRef.current), now + FADE_IN)
 
       oscillator.start(now)
 
@@ -86,7 +113,7 @@ export function useTonePlayer(): TonePlayer {
       setIsPlaying(true)
       setCurrentFrequency(frequencyHz)
     },
-    [stopTone],
+    [getContext, getTargetGain, stopTone],
   )
 
   const crossfadeTo = useCallback(
@@ -114,7 +141,7 @@ export function useTonePlayer(): TonePlayer {
       }
 
       newGain.gain.setValueAtTime(0, now)
-      newGain.gain.linearRampToValueAtTime(0.35, now + CROSSFADE)
+      newGain.gain.linearRampToValueAtTime(getTargetGain(volumeRef.current), now + CROSSFADE)
       newOsc.start(now)
 
       oscillatorRef.current = newOsc
@@ -123,7 +150,7 @@ export function useTonePlayer(): TonePlayer {
       setIsPlaying(true)
       setCurrentFrequency(frequencyHz)
     },
-    [],
+    [getContext, getTargetGain],
   )
 
   useEffect(() => {
@@ -136,5 +163,5 @@ export function useTonePlayer(): TonePlayer {
     }
   }, [stopTone])
 
-  return { playTone, stopTone, crossfadeTo, isPlaying, currentFrequency }
+  return { playTone, stopTone, crossfadeTo, setVolume, isPlaying, currentFrequency, volume }
 }

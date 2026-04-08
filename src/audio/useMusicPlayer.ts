@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 export interface MusicPlayerState {
-  playSong: (url: string) => void
+  playSong: (url: string, options?: { onEnded?: () => void }) => void
   pauseSong: () => void
   resumeSong: () => void
   seekTo: (timeSeconds: number) => void
   stopSong: () => void
+  setVolume: (nextVolume: number) => void
   isPlaying: boolean
   currentSong: string | null
   progress: number
   duration: number
+  volume: number
 }
 
 export function useMusicPlayer(): MusicPlayerState {
@@ -18,16 +20,23 @@ export function useMusicPlayer(): MusicPlayerState {
   const [currentSong, setCurrentSong] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [volume, setVolumeState] = useState(0.85)
+  const volumeRef = useRef(0.85)
   const rafRef = useRef<number | null>(null)
+  const updateProgressRef = useRef<() => void>(() => {})
 
   const updateProgress = useCallback(() => {
     const audio = audioRef.current
     if (audio && !audio.paused) {
       setProgress(audio.currentTime)
       setDuration(audio.duration || 0)
-      rafRef.current = requestAnimationFrame(updateProgress)
+      rafRef.current = requestAnimationFrame(updateProgressRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    updateProgressRef.current = updateProgress
+  }, [updateProgress])
 
   const stopProgressLoop = useCallback(() => {
     if (rafRef.current !== null) {
@@ -37,19 +46,20 @@ export function useMusicPlayer(): MusicPlayerState {
   }, [])
 
   const playSong = useCallback(
-    (url: string) => {
+    (url: string, options?: { onEnded?: () => void }) => {
       if (audioRef.current) {
         audioRef.current.pause()
         stopProgressLoop()
       }
 
       const audio = new Audio(url)
-      audio.volume = 0.85
+      audio.volume = volumeRef.current
 
       audio.addEventListener('ended', () => {
         setIsPlaying(false)
         setProgress(0)
         stopProgressLoop()
+        options?.onEnded?.()
       })
 
       audio.addEventListener('loadedmetadata', () => {
@@ -108,6 +118,16 @@ export function useMusicPlayer(): MusicPlayerState {
     stopProgressLoop()
   }, [stopProgressLoop])
 
+  const setVolume = useCallback((nextVolume: number) => {
+    const normalizedVolume = Math.max(0, Math.min(1, nextVolume))
+    volumeRef.current = normalizedVolume
+    setVolumeState(normalizedVolume)
+
+    if (audioRef.current) {
+      audioRef.current.volume = normalizedVolume
+    }
+  }, [])
+
   useEffect(() => {
     return () => {
       if (audioRef.current) {
@@ -118,5 +138,5 @@ export function useMusicPlayer(): MusicPlayerState {
     }
   }, [stopProgressLoop])
 
-  return { playSong, pauseSong, resumeSong, seekTo, stopSong, isPlaying, currentSong, progress, duration }
+  return { playSong, pauseSong, resumeSong, seekTo, stopSong, setVolume, isPlaying, currentSong, progress, duration, volume }
 }

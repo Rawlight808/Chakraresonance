@@ -3,6 +3,7 @@ import type { CSSProperties, KeyboardEvent } from 'react'
 import chakraBodyReference from '../assets/chakra-body-reference.png'
 import { chakraProfiles } from '../data/chakraProfiles'
 import type { ChakraId, ChakraProfile } from '../data/chakraProfiles'
+import { visualizerChakraScreensavers } from '../data/chakraScreensavers'
 import './ChakraVisualizer.css'
 
 type ChakraDetailsPanelProps = {
@@ -73,7 +74,7 @@ function ChakraDetailsPanel({
           className="chakra-visualizer__expand-btn"
           onClick={onOpenColorImmersion}
         >
-          View Full-Screen {chakra.colorLabel}
+          View Full-Screen {chakra.name} Screensaver
         </button>
 
         <button
@@ -128,6 +129,7 @@ export function ChakraVisualizer() {
 
   const activeChakra = chakraMap.get(activeId) ?? chakraProfiles[0]
   const isExpanded = expandedIds[activeChakra.id] ?? false
+  const activeScreensaver = visualizerChakraScreensavers[activeChakra.id]
   const flowPoints = useMemo(
     () =>
       chakraProfiles.map((chakra) => ({
@@ -479,10 +481,19 @@ export function ChakraVisualizer() {
         <button
           type="button"
           className="chakra-visualizer__color-immersion"
-          style={{ backgroundColor: activeChakra.color }}
-          aria-label={`Close ${activeChakra.colorLabel} full-screen color`}
+          aria-label={`Close ${activeChakra.name} full-screen screensaver`}
           onClick={() => setIsColorImmersionOpen(false)}
         >
+          <video
+            key={activeScreensaver}
+            className="chakra-visualizer__color-immersion-video"
+            src={activeScreensaver}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-hidden="true"
+          />
           <span
             className={[
               'chakra-visualizer__color-hint',
