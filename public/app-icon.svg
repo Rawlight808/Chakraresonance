@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="140" y1="120" x2="880" y2="940" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A1630"/>
+      <stop offset="0.5" stop-color="#0E1224"/>
+      <stop offset="1" stop-color="#080B14"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(512 512) rotate(90) scale(400 240)">
+      <stop stop-color="#FFFFFF" stop-opacity="0.24"/>
+      <stop offset="0.5" stop-color="#9A8BFF" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#9A8BFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blurLg" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+    <filter id="blurMd" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="228" fill="url(#bg)"/>
+  <rect width="1024" height="1024" rx="228" fill="url(#coreGlow)"/>
+
+  <g opacity="0.65" filter="url(#blurLg)">
+    <ellipse cx="512" cy="512" rx="110" ry="320" fill="#8F84FF" fill-opacity="0.28"/>
+  </g>
+
+  <g opacity="0.4" filter="url(#blurMd)">
+    <path d="M512 230C542 230 566 254 566 284V740C566 770 542 794 512 794C482 794 458 770 458 740V284C458 254 482 230 512 230Z" fill="#FFFFFF" fill-opacity="0.18"/>
+  </g>
+
+  <g>
+    <circle cx="512" cy="216" r="58" fill="#E94B54"/>
+    <circle cx="512" cy="318" r="52" fill="#FF8A3D"/>
+    <circle cx="512" cy="418" r="48" fill="#FFD34E"/>
+    <circle cx="512" cy="512" r="62" fill="#67E78F"/>
+    <circle cx="512" cy="618" r="50" fill="#54B9FF"/>
+    <circle cx="512" cy="718" r="46" fill="#766CFF"/>
+    <circle cx="512" cy="812" r="54" fill="#D38DFF"/>
+  </g>
+
+  <g opacity="0.9">
+    <circle cx="512" cy="216" r="24" fill="#FFF6F7"/>
+    <circle cx="512" cy="318" r="21" fill="#FFF7F0"/>
+    <circle cx="512" cy="418" r="18" fill="#FFFBEA"/>
+    <circle cx="512" cy="512" r="24" fill="#F4FFF8"/>
+    <circle cx="512" cy="618" r="19" fill="#F3FBFF"/>
+    <circle cx="512" cy="718" r="17" fill="#F4F3FF"/>
+    <circle cx="512" cy="812" r="20" fill="#FCF3FF"/>
+  </g>
+
+  <g opacity="0.75" filter="url(#blurMd)">
+    <circle cx="512" cy="216" r="76" fill="#E94B54" fill-opacity="0.42"/>
+    <circle cx="512" cy="318" r="70" fill="#FF8A3D" fill-opacity="0.36"/>
+    <circle cx="512" cy="418" r="66" fill="#FFD34E" fill-opacity="0.3"/>
+    <circle cx="512" cy="512" r="82" fill="#67E78F" fill-opacity="0.38"/>
+    <circle cx="512" cy="618" r="68" fill="#54B9FF" fill-opacity="0.32"/>
+    <circle cx="512" cy="718" r="62" fill="#766CFF" fill-opacity="0.32"/>
+    <circle cx="512" cy="812" r="72" fill="#D38DFF" fill-opacity="0.38"/>
+  </g>
+</svg>
