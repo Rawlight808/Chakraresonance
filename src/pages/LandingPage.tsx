@@ -71,23 +71,23 @@ export function LandingPage() {
 
         <h1 className="landing__title">Chakra Resonance</h1>
         <p className="landing__subtitle">
-          Align your energy centers through sound, color, aromas, and singing through the principle of resonance.
+          Tune your body. Restore your balance.
         </p>
 
         <div className="landing__actions">
-          <button
-            type="button"
-            className="landing__btn landing__btn--learn"
-            onClick={() => navigate('/learn')}
-          >
-            Learn
-          </button>
           <button
             type="button"
             className="landing__btn landing__btn--begin"
             onClick={() => navigate('/journey')}
           >
             Begin Chakra Tuning
+          </button>
+          <button
+            type="button"
+            className="landing__btn landing__btn--learn"
+            onClick={() => navigate('/learn')}
+          >
+            Learn
           </button>
         </div>
       </div>

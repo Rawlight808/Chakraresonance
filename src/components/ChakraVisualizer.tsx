@@ -12,7 +12,7 @@ type ChakraDetailsPanelProps = {
   panelId: string
   descriptionId: string
   onToggleExpand: () => void
-  onOpenColorImmersion: () => void
+  onOpenColorImmersion?: () => void
   onClose?: () => void
 }
 
@@ -69,13 +69,15 @@ function ChakraDetailsPanel({
       </div>
 
       <div className="chakra-visualizer__expandable">
-        <button
-          type="button"
-          className="chakra-visualizer__expand-btn"
-          onClick={onOpenColorImmersion}
-        >
-          View Full-Screen {chakra.name} Screensaver
-        </button>
+        {onOpenColorImmersion ? (
+          <button
+            type="button"
+            className="chakra-visualizer__expand-btn"
+            onClick={onOpenColorImmersion}
+          >
+            View Full-Screen {chakra.name} Screensaver
+          </button>
+        ) : null}
 
         <button
           type="button"
@@ -100,7 +102,11 @@ function ChakraDetailsPanel({
   )
 }
 
-export function ChakraVisualizer() {
+type ChakraVisualizerProps = {
+  showScreensaverOption?: boolean
+}
+
+export function ChakraVisualizer({ showScreensaverOption = true }: ChakraVisualizerProps) {
   const chakraIds = useMemo(() => chakraProfiles.map((chakra) => chakra.id), [])
   const chakraMap = useMemo(
     () => new Map(chakraProfiles.map((chakra) => [chakra.id, chakra])),
@@ -129,7 +135,9 @@ export function ChakraVisualizer() {
 
   const activeChakra = chakraMap.get(activeId) ?? chakraProfiles[0]
   const isExpanded = expandedIds[activeChakra.id] ?? false
-  const activeScreensaver = visualizerChakraScreensavers[activeChakra.id]
+  const activeScreensaver = showScreensaverOption
+    ? visualizerChakraScreensavers[activeChakra.id]
+    : null
   const flowPoints = useMemo(
     () =>
       chakraProfiles.map((chakra) => ({
@@ -446,7 +454,7 @@ export function ChakraVisualizer() {
             panelId={panelId}
             descriptionId={descriptionId}
             onToggleExpand={() => toggleExpanded(activeChakra.id)}
-            onOpenColorImmersion={openColorImmersion}
+            onOpenColorImmersion={showScreensaverOption ? openColorImmersion : undefined}
           />
         </aside>
       </div>
@@ -470,14 +478,14 @@ export function ChakraVisualizer() {
               panelId={`${panelId}-mobile`}
               descriptionId={`${descriptionId}-mobile`}
               onToggleExpand={() => toggleExpanded(activeChakra.id)}
-              onOpenColorImmersion={openColorImmersion}
+              onOpenColorImmersion={showScreensaverOption ? openColorImmersion : undefined}
               onClose={() => setIsDialogOpen(false)}
             />
           </div>
         </div>
       ) : null}
 
-      {isColorImmersionOpen ? (
+      {showScreensaverOption && isColorImmersionOpen && activeScreensaver ? (
         <button
           type="button"
           className="chakra-visualizer__color-immersion"

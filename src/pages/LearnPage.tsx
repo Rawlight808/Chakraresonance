@@ -45,7 +45,7 @@ export function LearnPage() {
         </header>
 
         <section className="learn__visualizer">
-          <ChakraVisualizer />
+          <ChakraVisualizer showScreensaverOption={false} />
         </section>
 
         {/* What are chakras */}
