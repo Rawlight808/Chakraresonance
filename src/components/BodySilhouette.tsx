@@ -12,6 +12,7 @@ export function BodySilhouette({ activeChakraId: _activeChakraId, activeColor: _
         src={chakraBodyReference}
         alt="Meditating figure with chakra points"
         className="body-silhouette__image"
+        loading="lazy"
       />
     </div>
   )

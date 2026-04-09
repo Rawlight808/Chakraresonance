@@ -7,10 +7,16 @@ export function LandingPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    document.title = 'Chakra Resonance'
+  }, [])
+
+  useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     let animId: number
     let t = 0
@@ -22,7 +28,43 @@ export function LandingPage() {
     resize()
     window.addEventListener('resize', resize)
 
+    if (prefersReducedMotion) {
+      const w = canvas.width
+      const h = canvas.height
+      const cx = w / 2
+      const cy = h / 2
+
+      for (let i = 6; i >= 0; i--) {
+        const radius = 120 + i * 70
+        const alpha = 0.04
+        const hue = 260 + i * 15
+        const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius)
+        gradient.addColorStop(0, `hsla(${hue}, 40%, 60%, ${alpha + 0.03})`)
+        gradient.addColorStop(0.6, `hsla(${hue}, 35%, 45%, ${alpha})`)
+        gradient.addColorStop(1, `hsla(${hue}, 30%, 30%, 0)`)
+        ctx.beginPath()
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+        ctx.fillStyle = gradient
+        ctx.fill()
+      }
+
+      return () => {
+        window.removeEventListener('resize', resize)
+      }
+    }
+
+    let isVisible = true
+
+    const handleVisibility = () => {
+      isVisible = !document.hidden
+      if (isVisible) {
+        animId = requestAnimationFrame(draw)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
     const draw = () => {
+      if (!isVisible) return
       t += 0.003
       const w = canvas.width
       const h = canvas.height
@@ -57,6 +99,7 @@ export function LandingPage() {
     return () => {
       cancelAnimationFrame(animId)
       window.removeEventListener('resize', resize)
+      document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [])
 

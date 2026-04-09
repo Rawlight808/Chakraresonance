@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChakraVisualizer } from '../components/ChakraVisualizer'
 import './LearnPage.css'
@@ -14,6 +15,10 @@ const chakraEndocrineMap = [
 
 export function LearnPage() {
   const navigate = useNavigate()
+
+  useEffect(() => {
+    document.title = 'Learn | Chakra Resonance'
+  }, [])
 
   return (
     <div className="learn">

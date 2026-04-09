@@ -1,7 +1,7 @@
 {
-  "name": "Journey thru the Chakras",
-  "short_name": "Chakra Journey",
-  "description": "Journey thru the Chakras with sound, color, resonance, and guided energy alignment.",
+  "name": "Chakra Resonance",
+  "short_name": "Chakra Resonance",
+  "description": "Tune your body and restore your balance through sound, color, and resonance.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

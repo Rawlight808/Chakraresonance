@@ -380,6 +380,7 @@ export function ChakraVisualizer({ showScreensaverOption = true }: ChakraVisuali
                 src={chakraBodyReference}
                 alt="Meditating human figure with chakra alignment points"
                 className="chakra-visualizer__body-image"
+                loading="lazy"
               />
 
               {chakraProfiles.map((chakra) => {

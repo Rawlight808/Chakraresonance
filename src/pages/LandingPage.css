@@ -148,6 +148,16 @@
   50% { transform: scale(1.1); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .landing__orb {
+    animation: none;
+  }
+
+  .landing__orb-inner {
+    animation: none;
+  }
+}
+
 @media (max-width: 640px) {
   .landing__title {
     font-size: 2.2rem;

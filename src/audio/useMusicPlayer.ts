@@ -8,6 +8,8 @@ export interface MusicPlayerState {
   stopSong: () => void
   setVolume: (nextVolume: number) => void
   isPlaying: boolean
+  isLoading: boolean
+  error: string | null
   currentSong: string | null
   progress: number
   duration: number
@@ -17,6 +19,8 @@ export interface MusicPlayerState {
 export function useMusicPlayer(): MusicPlayerState {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [currentSong, setCurrentSong] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -52,6 +56,9 @@ export function useMusicPlayer(): MusicPlayerState {
         stopProgressLoop()
       }
 
+      setIsLoading(true)
+      setError(null)
+
       const audio = new Audio(url)
       audio.volume = volumeRef.current
 
@@ -64,6 +71,14 @@ export function useMusicPlayer(): MusicPlayerState {
 
       audio.addEventListener('loadedmetadata', () => {
         setDuration(audio.duration)
+        setIsLoading(false)
+      })
+
+      audio.addEventListener('error', () => {
+        setIsLoading(false)
+        setIsPlaying(false)
+        setError('Unable to load this track')
+        stopProgressLoop()
       })
 
       audioRef.current = audio
@@ -73,6 +88,10 @@ export function useMusicPlayer(): MusicPlayerState {
       audio.play().then(() => {
         setIsPlaying(true)
         rafRef.current = requestAnimationFrame(updateProgress)
+      }).catch(() => {
+        setIsLoading(false)
+        setIsPlaying(false)
+        setError('Playback was blocked — tap anywhere and try again')
       })
     },
     [updateProgress, stopProgressLoop],
@@ -91,6 +110,8 @@ export function useMusicPlayer(): MusicPlayerState {
       audioRef.current.play().then(() => {
         setIsPlaying(true)
         rafRef.current = requestAnimationFrame(updateProgress)
+      }).catch(() => {
+        setError('Playback was blocked — tap anywhere and try again')
       })
     }
   }, [currentSong, updateProgress])
@@ -115,6 +136,7 @@ export function useMusicPlayer(): MusicPlayerState {
     setCurrentSong(null)
     setProgress(0)
     setDuration(0)
+    setError(null)
     stopProgressLoop()
   }, [stopProgressLoop])
 
@@ -138,5 +160,8 @@ export function useMusicPlayer(): MusicPlayerState {
     }
   }, [stopProgressLoop])
 
-  return { playSong, pauseSong, resumeSong, seekTo, stopSong, setVolume, isPlaying, currentSong, progress, duration, volume }
+  return {
+    playSong, pauseSong, resumeSong, seekTo, stopSong, setVolume,
+    isPlaying, isLoading, error, currentSong, progress, duration, volume,
+  }
 }
