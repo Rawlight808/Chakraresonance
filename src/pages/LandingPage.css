@@ -1,15 +1,16 @@
+/* ── Hero section ──────────────────────────────────── */
+
 .landing {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: linear-gradient(145deg, #0a0a14, #12101f, #0d0f1a);
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  color: rgba(255, 255, 255, 0.88);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
 }
 
 .landing__canvas {
-  position: absolute;
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
@@ -17,13 +18,15 @@
   z-index: 0;
 }
 
-.landing__content {
+.landing__hero {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
+  min-height: 100vh;
   padding: 2rem;
   gap: 1.2rem;
 }
@@ -158,6 +161,199 @@
   }
 }
 
+/* ── Learn section (below hero) ───────────────────── */
+
+.landing__learn {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(170deg, #0a0a14, #10101e, #0c0e18);
+}
+
+.landing__learn .learn__content {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+}
+
+.landing__learn .learn__header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.landing__learn .learn__header h2 {
+  font-size: 2.4rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0 0 1rem;
+}
+
+.landing__learn .learn__intro {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.landing__learn .learn__visualizer {
+  margin: 0 0 3rem;
+}
+
+.landing__learn .learn__section {
+  margin-bottom: 3rem;
+}
+
+.landing__learn .learn__section h3 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.landing__learn .learn__section p {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 1rem;
+}
+
+.landing__learn .learn__section p:last-child {
+  margin-bottom: 0;
+}
+
+/* Endocrine Map */
+.landing__learn .learn__map {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.landing__learn .learn__map-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s;
+}
+
+.landing__learn .learn__map-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.landing__learn .learn__map-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 4px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.landing__learn .learn__map-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.landing__learn .learn__map-chakra {
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.landing__learn .learn__map-gland {
+  font-size: 0.88rem;
+  color: rgba(192, 132, 252, 0.8);
+}
+
+.landing__learn .learn__map-role {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Methods grid */
+.landing__learn .learn__methods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.landing__learn .learn__method {
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+}
+
+.landing__learn .learn__method-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.6rem;
+  opacity: 0.7;
+}
+
+.landing__learn .learn__method h4 {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+  margin: 0 0 0.5rem;
+}
+
+.landing__learn .learn__method p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+}
+
+/* CTA */
+.landing__learn .learn__cta {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.landing__learn .learn__cta p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 1.2rem;
+}
+
+.landing__learn .learn__cta-btn {
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.85), rgba(139, 92, 246, 0.9));
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 0.85rem 2.4rem;
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow:
+    0 4px 24px rgba(139, 92, 246, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.25s;
+}
+
+.landing__learn .learn__cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 32px rgba(139, 92, 246, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Responsive ───────────────────────────────────── */
+
 @media (max-width: 640px) {
   .landing__title {
     font-size: 2.2rem;
@@ -184,5 +380,18 @@
   .landing__orb-inner {
     width: 48px;
     height: 48px;
+  }
+
+  .landing__learn .learn__content {
+    max-width: 100%;
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  .landing__learn .learn__header h2 {
+    font-size: 1.8rem;
+  }
+
+  .landing__learn .learn__methods {
+    grid-template-columns: 1fr;
   }
 }

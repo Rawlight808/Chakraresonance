@@ -1,10 +1,10 @@
 export type ChakraId =
   | 'root'
   | 'sacral'
-  | 'solar-plexus'
+  | 'solar_plexus'
   | 'heart'
   | 'throat'
-  | 'third-eye'
+  | 'third_eye'
   | 'crown'
 
 export type ChakraProfile = {
@@ -19,13 +19,12 @@ export type ChakraProfile = {
   bodyPosition: number
 }
 
-// This dataset powers the visualizer and keeps the content easy to update.
 export const chakraProfiles: ChakraProfile[] = [
   {
     id: 'root',
     name: 'Root',
     sanskritName: 'Muladhara',
-    color: '#ff5a5f',
+    color: '#E53935',
     colorLabel: 'Red',
     location: 'Base of the spine',
     meaning: 'Grounding, safety, and a sense of belonging in the physical world.',
@@ -37,7 +36,7 @@ export const chakraProfiles: ChakraProfile[] = [
     id: 'sacral',
     name: 'Sacral',
     sanskritName: 'Svadhisthana',
-    color: '#ff9a3d',
+    color: '#FF7043',
     colorLabel: 'Orange',
     location: 'Lower abdomen, below the navel',
     meaning: 'Creativity, emotional flow, pleasure, and relationship to desire.',
@@ -46,10 +45,10 @@ export const chakraProfiles: ChakraProfile[] = [
     bodyPosition: 71.5,
   },
   {
-    id: 'solar-plexus',
+    id: 'solar_plexus',
     name: 'Solar Plexus',
     sanskritName: 'Manipura',
-    color: '#ffd84d',
+    color: '#FBC02D',
     colorLabel: 'Yellow',
     location: 'Upper abdomen, above the navel',
     meaning: 'Confidence, personal power, will, and inner fire.',
@@ -61,7 +60,7 @@ export const chakraProfiles: ChakraProfile[] = [
     id: 'heart',
     name: 'Heart',
     sanskritName: 'Anahata',
-    color: '#67e78f',
+    color: '#43A047',
     colorLabel: 'Green',
     location: 'Center of the chest',
     meaning: 'Love, compassion, healing, and emotional openness.',
@@ -73,7 +72,7 @@ export const chakraProfiles: ChakraProfile[] = [
     id: 'throat',
     name: 'Throat',
     sanskritName: 'Vishuddha',
-    color: '#59b7ff',
+    color: '#1E88E5',
     colorLabel: 'Blue',
     location: 'Throat and neck',
     meaning: 'Truth, communication, listening, and self-expression.',
@@ -82,10 +81,10 @@ export const chakraProfiles: ChakraProfile[] = [
     bodyPosition: 37,
   },
   {
-    id: 'third-eye',
+    id: 'third_eye',
     name: 'Third Eye',
     sanskritName: 'Ajna',
-    color: '#7f76ff',
+    color: '#5E35B1',
     colorLabel: 'Indigo',
     location: 'Between the eyebrows',
     meaning: 'Insight, intuition, perception, and inner wisdom.',
@@ -97,7 +96,7 @@ export const chakraProfiles: ChakraProfile[] = [
     id: 'crown',
     name: 'Crown',
     sanskritName: 'Sahasrara',
-    color: '#d588ff',
+    color: '#AB47BC',
     colorLabel: 'Violet',
     location: 'Top of the head',
     meaning: 'Spiritual connection, consciousness, and a sense of wholeness.',

@@ -1,1 +1,8 @@
-/* App-level resets handled in index.css */
+.page-transition {
+  animation: pageFadeIn 0.3s ease-out both;
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

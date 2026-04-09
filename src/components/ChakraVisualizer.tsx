@@ -3,7 +3,7 @@ import type { CSSProperties, KeyboardEvent } from 'react'
 import chakraBodyReference from '../assets/chakra-body-reference.png'
 import { chakraProfiles } from '../data/chakraProfiles'
 import type { ChakraId, ChakraProfile } from '../data/chakraProfiles'
-import { visualizerChakraScreensavers } from '../data/chakraScreensavers'
+import { chakraScreensavers } from '../data/chakraScreensavers'
 import './ChakraVisualizer.css'
 
 type ChakraDetailsPanelProps = {
@@ -136,7 +136,7 @@ export function ChakraVisualizer({ showScreensaverOption = true }: ChakraVisuali
   const activeChakra = chakraMap.get(activeId) ?? chakraProfiles[0]
   const isExpanded = expandedIds[activeChakra.id] ?? false
   const activeScreensaver = showScreensaverOption
-    ? visualizerChakraScreensavers[activeChakra.id]
+    ? chakraScreensavers[activeChakra.id]
     : null
   const flowPoints = useMemo(
     () =>
@@ -308,8 +308,10 @@ export function ChakraVisualizer({ showScreensaverOption = true }: ChakraVisuali
           <h2 id={titleId}>Explore the seven main chakras through color, placement, and meaning.</h2>
         </div>
         <p className="chakra-visualizer__intro">
-          Select a chakra on the body outline to reveal its meaning. Use arrow keys to move between
-          energy centers, then press Enter or Space to open details.
+          Tap a chakra on the body or choose from the list below.
+          <span className="chakra-visualizer__intro-desktop">
+            {' '}Use arrow keys to navigate, then Enter to open details.
+          </span>
         </p>
       </div>
 
@@ -424,6 +426,19 @@ export function ChakraVisualizer({ showScreensaverOption = true }: ChakraVisuali
             </div>
           </div>
 
+          {isCompact && (
+            <button
+              type="button"
+              className="chakra-visualizer__mobile-hint"
+              onClick={() => selectChakra(activeChakra.id, true)}
+              style={{ '--chakra-color': activeChakra.color } as CSSProperties}
+            >
+              <span className="chakra-visualizer__mobile-hint-dot" style={{ background: activeChakra.color }} aria-hidden="true" />
+              About {activeChakra.name} Chakra →
+            </button>
+          )}
+
+          <p className="chakra-visualizer__rail-heading">Choose a chakra</p>
           <div className="chakra-visualizer__rail" aria-label="Chakra quick select">
             {chakraProfiles.map((chakra) => {
               const isActive = chakra.id === activeChakra.id

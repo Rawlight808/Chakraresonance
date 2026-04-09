@@ -25,6 +25,12 @@ function shuffleSongs(songs: ChakraSong[]) {
   return nextSongs
 }
 
+function getRandomSong(songs: ChakraSong[]) {
+  if (songs.length === 0) return null
+  const randomIndex = Math.floor(Math.random() * songs.length)
+  return songs[randomIndex] ?? null
+}
+
 export function ChakraJourney() {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -32,9 +38,10 @@ export function ChakraJourney() {
   const [elapsed, setElapsed] = useState(0)
   const [journeyComplete, setJourneyComplete] = useState(false)
   const [audioMode, setAudioMode] = useState<AudioMode>('both')
-  const [showPlaylist, setShowPlaylist] = useState(true)
   const [isScreensaverOpen, setIsScreensaverOpen] = useState(false)
   const [isScreensaverHintVisible, setIsScreensaverHintVisible] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
+  const [selectedSongFile, setSelectedSongFile] = useState<string | null>(null)
   const timerRef = useRef<number | null>(null)
   const elapsedRef = useRef(0)
   const prevStepRef = useRef<string | null>(null)
@@ -204,28 +211,33 @@ export function ChakraJourney() {
     prevStepRef.current = step.id
 
     const isStepChanged = prev !== null && prev !== step.id
-    const isFirstAutoStep = mode === 'auto' && currentIndex === 0 && prev === step.id
+    const isFirstStep = prev === step.id && currentIndex === 0 && mode !== null
 
-    if (isStepChanged || isFirstAutoStep) {
+    if (isStepChanged || isFirstStep) {
       stopSong()
       manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = 0
 
-      if (!wantsMusic) return
-
       const selectedSong = mode === 'auto'
         ? getNextAutoSong(step.chakraId, step.note)
-        : (songs[0] ?? null)
+        : getRandomSong(songs)
 
-      if (selectedSong) {
-        if (mode === 'manual') {
-          const songIdx = songs.findIndex((s) => s.file === selectedSong.file)
-          manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = songIdx >= 0 ? songIdx : 0
-        }
-        playSong(
-          selectedSong.file,
-          { onEnded: handleSongEndRef.current },
-        )
+      if (!selectedSong) return
+
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: preselect must sync on step transition
+      setSelectedSongFile(selectedSong.file)
+
+      if (mode === 'manual') {
+        const songIdx = songs.findIndex((s) => s.file === selectedSong.file)
+        manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = songIdx >= 0 ? songIdx : 0
+        return
       }
+
+      if (!wantsMusic) return
+
+      playSong(
+        selectedSong.file,
+        { onEnded: handleSongEndRef.current },
+      )
     }
   }, [
     currentIndex,
@@ -254,10 +266,10 @@ export function ChakraJourney() {
     setCurrentIndex(0)
     setElapsed(0)
     setJourneyComplete(false)
-    setShowPlaylist(true)
     prevStepRef.current = journeySteps[0].id
     setIsScreensaverOpen(false)
     setIsScreensaverHintVisible(false)
+    setSelectedSongFile(null)
 
     if (selectedMode === 'auto') {
       void playTone(journeySteps[0].frequencyHz)
@@ -273,7 +285,7 @@ export function ChakraJourney() {
     setCurrentIndex(0)
     setElapsed(0)
     setJourneyComplete(false)
-    setShowPlaylist(false)
+    setSelectedSongFile(null)
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
@@ -354,6 +366,7 @@ export function ChakraJourney() {
   }
 
   const handleSongSelect = (file: string) => {
+    setSelectedSongFile(file)
     enableMusicMode()
     if (file === currentSong && musicIsPlaying) {
       pauseSong()
@@ -371,18 +384,22 @@ export function ChakraJourney() {
   const handleNextSong = () => {
     if (songs.length === 0) return
     enableMusicMode()
-    const currentIdx = songs.findIndex((song) => song.file === currentSong)
+    const activeSong = currentSong ?? selectedSongFile
+    const currentIdx = songs.findIndex((song) => song.file === activeSong)
     const nextIdx = (currentIdx + 1) % songs.length
     manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = nextIdx
+    setSelectedSongFile(songs[nextIdx].file)
     playSong(songs[nextIdx].file, { onEnded: handleSongEndRef.current })
   }
 
   const handlePrevSong = () => {
     if (songs.length === 0) return
     enableMusicMode()
-    const currentIdx = songs.findIndex((song) => song.file === currentSong)
+    const activeSong = currentSong ?? selectedSongFile
+    const currentIdx = songs.findIndex((song) => song.file === activeSong)
     const prevIdx = currentIdx <= 0 ? songs.length - 1 : currentIdx - 1
     manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = prevIdx
+    setSelectedSongFile(songs[prevIdx].file)
     playSong(songs[prevIdx].file, { onEnded: handleSongEndRef.current })
   }
 
@@ -392,8 +409,13 @@ export function ChakraJourney() {
     enableMusicMode()
 
     if (!currentSong) {
-      manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = 0
-      playSong(songs[0].file, { onEnded: handleSongEndRef.current })
+      const fallbackSong = selectedSongFile
+        ? songs.find((song) => song.file === selectedSongFile) ?? songs[0]
+        : songs[0]
+      const fallbackIdx = songs.findIndex((song) => song.file === fallbackSong.file)
+      manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = fallbackIdx >= 0 ? fallbackIdx : 0
+      setSelectedSongFile(fallbackSong.file)
+      playSong(fallbackSong.file, { onEnded: handleSongEndRef.current })
       return
     }
 
@@ -425,8 +447,13 @@ export function ChakraJourney() {
         }
 
         if (!currentSong) {
-          manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = 0
-          playSong(songs[0].file, { onEnded: handleSongEndRef.current })
+          const fallbackSong = selectedSongFile
+            ? songs.find((song) => song.file === selectedSongFile) ?? songs[0]
+            : songs[0]
+          const fallbackIdx = songs.findIndex((song) => song.file === fallbackSong.file)
+          manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = fallbackIdx >= 0 ? fallbackIdx : 0
+          setSelectedSongFile(fallbackSong.file)
+          playSong(fallbackSong.file, { onEnded: handleSongEndRef.current })
           return
         }
 
@@ -444,9 +471,11 @@ export function ChakraJourney() {
         if (!wantsMusic) {
           handleAudioModeChange(toneIsPlaying ? 'both' : 'music')
         }
-        const currentIdx = songs.findIndex((song) => song.file === currentSong)
+        const activeSong = currentSong ?? selectedSongFile
+        const currentIdx = songs.findIndex((song) => song.file === activeSong)
         const nextIdx = (currentIdx + 1) % songs.length
         manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = nextIdx
+        setSelectedSongFile(songs[nextIdx].file)
         playSong(songs[nextIdx].file, { onEnded: handleSongEndRef.current })
         return
       }
@@ -457,9 +486,11 @@ export function ChakraJourney() {
         if (!wantsMusic) {
           handleAudioModeChange(toneIsPlaying ? 'both' : 'music')
         }
-        const currentIdx = songs.findIndex((song) => song.file === currentSong)
+        const activeSong = currentSong ?? selectedSongFile
+        const currentIdx = songs.findIndex((song) => song.file === activeSong)
         const prevIdx = currentIdx <= 0 ? songs.length - 1 : currentIdx - 1
         manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = prevIdx
+        setSelectedSongFile(songs[prevIdx].file)
         playSong(songs[prevIdx].file, { onEnded: handleSongEndRef.current })
       }
     }
@@ -479,6 +510,7 @@ export function ChakraJourney() {
     songs,
     step.chakraId,
     step.note,
+    selectedSongFile,
     toneIsPlaying,
     wantsMusic,
   ])
@@ -514,10 +546,11 @@ export function ChakraJourney() {
   const directionSymbol = step.direction === 'ascending' ? '↑' : '↓'
 
   const currentSongTitle = useMemo(() => {
-    if (!currentSong) return null
-    const found = songs.find((song) => song.file === currentSong)
+    const activeSongFile = currentSong ?? selectedSongFile
+    if (!activeSongFile) return null
+    const found = songs.find((song) => song.file === activeSongFile)
     return found?.title ?? null
-  }, [currentSong, songs])
+  }, [currentSong, selectedSongFile, songs])
 
   if (mode === null) {
     return (
@@ -562,6 +595,21 @@ export function ChakraJourney() {
   }
 
   if (journeyComplete) {
+    const shareText = 'I just completed a full chakra tuning journey on Chakra Resonance — 7 energy centers, root to crown and back. ✨'
+    const shareUrl = window.location.origin
+
+    const handleShare = async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Chakra Resonance', text: shareText, url: shareUrl })
+        } catch { /* user cancelled */ }
+      } else {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`)
+        setShareCopied(true)
+        setTimeout(() => setShareCopied(false), 2000)
+      }
+    }
+
     return (
       <div
         className="journey-complete"
@@ -575,9 +623,15 @@ export function ChakraJourney() {
             your body and descending down the back, tuning each energy center
             along the way.
           </p>
+          <p className="journey-complete__date">
+            {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
           <div className="journey-complete__actions">
             <button type="button" className="btn btn--primary" onClick={() => startJourney(mode)}>
               Begin Again
+            </button>
+            <button type="button" className="btn btn--share" onClick={handleShare}>
+              {shareCopied ? 'Link Copied!' : 'Share Your Journey'}
             </button>
             <button type="button" className="btn btn--ghost" onClick={() => navigate('/')}>
               Return Home
@@ -685,11 +739,22 @@ export function ChakraJourney() {
           }}
         >
           <header className="chakra-header">
-            <p className="chakra-header__eyebrow">
-              Step {currentIndex + 1} of {totalSteps} &middot; {directionSymbol} {directionLabel} &middot; {step.sanskritName}
-            </p>
-            <h1 className="chakra-header__title">{step.name}</h1>
-            <p className="chakra-header__location">{step.location}</p>
+            <div className="chakra-header__content">
+              <p className="chakra-header__eyebrow">
+                Step {currentIndex + 1} of {totalSteps} &middot; {directionSymbol} {directionLabel} &middot; {step.sanskritName}
+              </p>
+              <h1 className="chakra-header__title">{step.name}</h1>
+              <p className="chakra-header__location">{step.location}</p>
+            </div>
+            <button
+              type="button"
+              className="visual-zone__btn chakra-header__visual-btn"
+              onClick={openScreensaver}
+              style={{ borderColor: `${step.color}44`, color: step.color }}
+            >
+              <span className="visual-zone__icon" aria-hidden="true">⛶</span>
+              Full-Screen Visual
+            </button>
           </header>
 
           {mode === 'auto' && (
@@ -717,7 +782,7 @@ export function ChakraJourney() {
             <div className="chakra-visual">
               <button
                 type="button"
-                className="chakra-visual__glow"
+                className={`chakra-visual__glow ${toneIsPlaying ? 'chakra-visual__glow--active' : ''}`}
                 onClick={handleToneToggle}
                 aria-label={toneIsPlaying ? `Mute ${step.name} tone` : `Play ${step.name} tone`}
                 aria-pressed={toneIsPlaying}
@@ -732,6 +797,28 @@ export function ChakraJourney() {
                   }}
                 />
               </button>
+              <span className="chakra-visual__orb-caption" aria-hidden="true">
+                {toneIsPlaying ? 'Stop Chakra Tone' : 'Play Chakra Tone'}
+              </span>
+              {wantsTone && (
+                <label className="chakra-visual__tone-volume">
+                  <span className="chakra-visual__tone-volume-icon" aria-hidden="true">▶</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={toneVolume}
+                    onChange={handleToneVolumeChange}
+                    className="chakra-visual__tone-volume-slider"
+                    style={{ accentColor: step.color }}
+                    aria-label="Tone volume"
+                  />
+                  <span className="chakra-visual__tone-volume-value" aria-live="polite">
+                    {Math.round(toneVolume * 100)}%
+                  </span>
+                </label>
+              )}
 
               <div className="chakra-vowel">
                 <span className="chakra-vowel__label">Sing</span>
@@ -741,122 +828,90 @@ export function ChakraJourney() {
               <BodySilhouette activeChakraId={step.chakraId} activeColor={step.color} />
             </div>
 
-            {/* Right column: info */}
+            {/* Right column: info + controls */}
             <div className="chakra-info">
-              <div className="chakra-note">
-                <span className="chakra-note__label">Note</span>
-                <span className="chakra-note__value" style={{ color: step.colorLight }}>{step.note}</span>
-                <span className="chakra-note__frequency">
-                  {Math.round(step.frequencyHz)} Hz
-                </span>
-              </div>
-
-              <p className="chakra-description">{step.description}</p>
-
-              <div className="chakra-affirmation">
-                <span className="chakra-affirmation__label">Affirmation</span>
-                <span className="chakra-affirmation__text">
-                  &ldquo;{step.affirmation}&rdquo;
-                </span>
-              </div>
-
-              <div className="chakra-oils">
-                <span className="chakra-oils__label">Essential Oils</span>
-                <div className="chakra-oils__list">
-                  {step.essentialOils.map((oil) => (
-                    <span
-                      key={oil}
-                      className="chakra-oil-pill"
-                      style={{ borderColor: `${step.color}33`, background: `${step.color}12` }}
-                    >
-                      {oil}
-                    </span>
-                  ))}
+              {/* ── Info zone ── */}
+              <div className="chakra-info__zone">
+                <div className="chakra-note">
+                  <span className="chakra-note__label">Note</span>
+                  <span className="chakra-note__value" style={{ color: step.colorLight }}>{step.note}</span>
+                  <span className="chakra-note__frequency">
+                    {Math.round(step.frequencyHz)} Hz
+                  </span>
+                </div>
+                <p className="chakra-description">{step.description}</p>
+                <div className="chakra-affirmation">
+                  <span className="chakra-affirmation__label">Affirmation</span>
+                  <span className="chakra-affirmation__text">
+                    &ldquo;{step.affirmation}&rdquo;
+                  </span>
                 </div>
               </div>
 
-              <div className="chakra-themes" aria-label="Chakra themes">
-                {step.themes.map((theme) => (
-                  <span
-                    key={theme}
-                    className="chakra-theme-pill"
-                    style={{ borderColor: `${step.color}22`, background: `${step.color}0a` }}
-                  >
-                    {theme}
-                  </span>
-                ))}
-              </div>
+              {/* ── Audio dock ── */}
+              <div className="audio-dock" style={{ borderColor: `${step.color}22` }}>
+                <div className="audio-dock__header">
+                  <span className="audio-dock__icon" aria-hidden="true">♫</span>
+                  <span className="audio-dock__title">Sound</span>
+                </div>
 
-              <button
-                type="button"
-                className="btn btn--color-screen"
-                onClick={openScreensaver}
-                style={{ borderColor: `${step.color}44`, color: step.color }}
-              >
-                View Full-Screen {step.name} Screensaver
-              </button>
-
-              {/* Audio mode toggle */}
-              <div className="audio-mode-toggle" role="radiogroup" aria-label="Audio mode">
-                {(['tone', 'music', 'both'] as AudioMode[]).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    role="radio"
-                    aria-checked={audioMode === m}
-                    className={`audio-mode-toggle__btn ${audioMode === m ? 'audio-mode-toggle__btn--active' : ''}`}
-                    style={audioMode === m ? { background: step.color, boxShadow: `0 4px 16px ${step.color}66` } : {}}
-                    onClick={() => handleAudioModeChange(m)}
-                  >
-                    {m === 'tone' ? 'Tone Only' : m === 'music' ? 'Music Only' : 'Music and Tone'}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tone control (when tone is active) */}
-              {(wantsTone || wantsMusic) && (
-                <div className="tone-controls">
-                  {wantsTone && (
-                    <>
-                      <button
-                        type="button"
-                        className="btn btn--tone"
-                        onClick={handleToneToggle}
-                        aria-pressed={toneIsPlaying}
+                {/* Music player */}
+                {wantsMusic && (
+                  <div className="music-player" style={{ borderColor: `${step.color}22`, background: `${step.color}0a` }}>
+                    <div className="music-player__top">
+                      <span className="music-player__title">
+                        {musicIsLoading ? 'Loading...' :
+                         musicError ? musicError :
+                         currentSongTitle ?? 'No track selected'}
+                      </span>
+                      <div className="audio-dock__transport">
+                        <button
+                          type="button"
+                          className="audio-dock__transport-btn"
+                          style={{ color: step.color }}
+                          onClick={handlePrevSong}
+                          aria-label="Previous song"
+                        >
+                          ⏮
+                        </button>
+                        <button
+                          type="button"
+                          className="audio-dock__transport-btn audio-dock__transport-btn--main"
+                          style={{ color: step.color, borderColor: `${step.color}55` }}
+                          onClick={handleMusicPlayPause}
+                          aria-label={musicIsPlaying ? 'Pause music' : 'Play music'}
+                        >
+                          {musicIsPlaying ? '⏸' : '▶'}
+                        </button>
+                        <button
+                          type="button"
+                          className="audio-dock__transport-btn"
+                          style={{ color: step.color }}
+                          onClick={handleNextSong}
+                          aria-label="Next song"
+                        >
+                          ⏭
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="audio-dock__seek"
+                      onClick={handleSeek}
+                      aria-label={musicDuration > 0 ? 'Seek within song' : 'Song progress'}
+                      disabled={musicDuration <= 0}
+                    >
+                      <div
+                        className="audio-dock__seek-fill"
                         style={{
-                          borderColor: `${step.color}44`,
-                          color: step.color,
+                          width: musicDuration > 0 ? `${(musicProgress / musicDuration) * 100}%` : '0%',
+                          backgroundColor: step.color,
                         }}
-                      >
-                        {toneIsPlaying ? 'Mute Tone' : 'Play Tone'}
-                      </button>
-
-                      <label className="tone-volume">
-                        <span className="tone-volume__label">Tone Volume</span>
-                        <div className="tone-volume__row">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.01"
-                            value={toneVolume}
-                            onChange={handleToneVolumeChange}
-                            className="tone-volume__slider"
-                            style={{ accentColor: step.color }}
-                            aria-label="Tone volume"
-                          />
-                          <span className="tone-volume__value" aria-live="polite">
-                            {Math.round(toneVolume * 100)}%
-                          </span>
-                        </div>
-                      </label>
-                    </>
-                  )}
-
-                  {wantsMusic && (
-                    <label className="tone-volume">
-                      <span className="tone-volume__label">Music Volume</span>
-                      <div className="tone-volume__row">
+                      />
+                    </button>
+                    <div className="music-player__bottom">
+                      <div className="audio-dock__volume">
+                        <span className="audio-dock__vol-icon" aria-hidden="true">♫</span>
                         <input
                           type="range"
                           min="0"
@@ -864,123 +919,92 @@ export function ChakraJourney() {
                           step="0.01"
                           value={musicVolume}
                           onChange={handleMusicVolumeChange}
-                          className="tone-volume__slider"
+                          className="audio-dock__slider"
                           style={{ accentColor: step.color }}
                           aria-label="Music volume"
                         />
-                        <span className="tone-volume__value" aria-live="polite">
+                        <span className="audio-dock__vol-value" aria-live="polite">
                           {Math.round(musicVolume * 100)}%
                         </span>
                       </div>
-                    </label>
-                  )}
+                      <span className="audio-dock__time">
+                        {formatTime(musicProgress)} / {formatTime(musicDuration)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {mode === 'auto' && wantsMusic && (
+                  <p className="audio-dock__hint">Moves to the next chakra when the current song ends</p>
+                )}
+
+                <p className="audio-dock__shortcuts">
+                  Space play/pause &middot; &larr;&rarr; change track
+                </p>
+              </div>
+
+              {/* ── Playlist ── */}
+              {hasSongs && (
+                <div className="playlist-zone">
+                  <div className="playlist-zone__label">
+                    {step.name} Playlist
+                  </div>
+                  <div className="music-playlist" style={{ borderColor: `${step.color}22` }}>
+                    <div className="music-playlist__list" role="list">
+                      {songs.map((song) => {
+                        const isActive = (currentSong ?? selectedSongFile) === song.file
+                        return (
+                          <button
+                            key={song.file}
+                            type="button"
+                            role="listitem"
+                            className={`music-playlist__item ${isActive ? 'music-playlist__item--active' : ''}`}
+                            style={isActive ? { background: `${step.color}22`, borderColor: `${step.color}44` } : {}}
+                            onClick={() => handleSongSelect(song.file)}
+                            aria-current={isActive ? 'true' : undefined}
+                          >
+                            <span className="music-playlist__item-icon" style={isActive ? { color: step.color } : {}} aria-hidden="true">
+                              {isActive && musicIsPlaying ? '⏸' : '▶'}
+                            </span>
+                            <span className="music-playlist__item-title">{song.title}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* Now playing bar */}
-              {hasSongs && (
-                <div className="now-playing" style={{ borderColor: `${step.color}33`, background: `${step.color}0c` }}>
-                  <div className="now-playing__info">
-                    <span className="now-playing__label">Now Playing</span>
-                    <span className="now-playing__title">
-                      {musicIsLoading ? 'Loading...' :
-                       musicError ? musicError :
-                       currentSongTitle ?? `Select a song from the ${step.name.toLowerCase()} playlist`}
+              {/* ── Details zone ── */}
+              <div className="details-zone">
+                <div className="chakra-oils">
+                  <span className="chakra-oils__label">Essential Oils</span>
+                  <div className="chakra-oils__list">
+                    {step.essentialOils.map((oil) => (
+                      <span
+                        key={oil}
+                        className="chakra-oil-pill"
+                        style={{ borderColor: `${step.color}33`, background: `${step.color}12` }}
+                      >
+                        {oil}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="chakra-themes" aria-label="Chakra themes">
+                  {step.themes.map((theme) => (
+                    <span
+                      key={theme}
+                      className="chakra-theme-pill"
+                      style={{ borderColor: `${step.color}22`, background: `${step.color}0a` }}
+                    >
+                      {theme}
                     </span>
-                  </div>
-                  <div className="now-playing__controls">
-                    <button
-                      type="button"
-                      className="now-playing__btn"
-                      style={{ color: step.color }}
-                      onClick={handlePrevSong}
-                      aria-label="Previous song"
-                    >
-                      ◀◀
-                    </button>
-                    <button
-                      type="button"
-                      className="now-playing__btn"
-                      style={{ color: step.color }}
-                      onClick={handleMusicPlayPause}
-                      aria-label={musicIsPlaying ? 'Pause' : 'Play'}
-                    >
-                      {musicIsPlaying ? '▮▮' : '▶'}
-                    </button>
-                    <button
-                      type="button"
-                      className="now-playing__btn"
-                      style={{ color: step.color }}
-                      onClick={handleNextSong}
-                      aria-label="Next song"
-                    >
-                      ▶▶
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    className="now-playing__progress"
-                    onClick={handleSeek}
-                    aria-label={musicDuration > 0 ? 'Seek within song' : 'Song progress'}
-                    disabled={musicDuration <= 0}
-                  >
-                    <div
-                      className="now-playing__progress-fill"
-                      style={{
-                        width: musicDuration > 0 ? `${(musicProgress / musicDuration) * 100}%` : '0%',
-                        backgroundColor: step.color,
-                      }}
-                    />
-                  </button>
-                  <div className="now-playing__time">
-                    {formatTime(musicProgress)} / {formatTime(musicDuration)}
-                  </div>
+                  ))}
                 </div>
-              )}
+              </div>
 
-              {/* Music playlist toggle */}
-              {hasSongs && (
-                <button
-                  type="button"
-                  className="btn btn--playlist-toggle"
-                  onClick={() => setShowPlaylist(!showPlaylist)}
-                  style={{ borderColor: `${step.color}33` }}
-                  aria-expanded={showPlaylist}
-                >
-                  {showPlaylist ? `Hide ${step.name} Playlist` : `${step.name} Playlist (${songs.length} songs)`}
-                </button>
-              )}
-
-              {/* Collapsible playlist */}
-              {showPlaylist && hasSongs && (
-                <div className="music-playlist" style={{ borderColor: `${step.color}22` }}>
-                  <div className="music-playlist__header">
-                    <span className="music-playlist__title">{step.name} Songs</span>
-                  </div>
-                  <div className="music-playlist__list" role="list">
-                    {songs.map((song) => {
-                      const isActive = currentSong === song.file
-                      return (
-                        <button
-                          key={song.file}
-                          type="button"
-                          role="listitem"
-                          className={`music-playlist__item ${isActive ? 'music-playlist__item--active' : ''}`}
-                          style={isActive ? { background: `${step.color}22`, borderColor: `${step.color}44` } : {}}
-                          onClick={() => handleSongSelect(song.file)}
-                          aria-current={isActive ? 'true' : undefined}
-                        >
-                          <span className="music-playlist__item-icon" style={isActive ? { color: step.color } : {}} aria-hidden="true">
-                            {isActive && musicIsPlaying ? '▮▮' : '▶'}
-                          </span>
-                          <span className="music-playlist__item-title">{song.title}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
+              {/* ── Step navigation ── */}
               <div className="chakra-controls__nav">
                 <button
                   type="button"
@@ -993,7 +1017,7 @@ export function ChakraJourney() {
                   }}
                   disabled={currentIndex === 0}
                 >
-                  &larr; Previous
+                  ← Previous
                 </button>
                 <button
                   type="button"
@@ -1011,7 +1035,7 @@ export function ChakraJourney() {
                     }
                   }}
                 >
-                  {currentIndex === totalSteps - 1 ? 'Complete' : 'Next'} &rarr;
+                  {currentIndex === totalSteps - 1 ? 'Complete' : 'Next'} →
                 </button>
               </div>
             </div>
