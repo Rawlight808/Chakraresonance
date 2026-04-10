@@ -115,54 +115,6 @@
   aspect-ratio: 1 / 1;
 }
 
-.chakra-visualizer__flow {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.chakra-visualizer__flow-track {
-  fill: none;
-  stroke: rgba(220, 228, 255, 0.16);
-  stroke-width: 1.8;
-}
-
-.chakra-visualizer__flow-front,
-.chakra-visualizer__flow-back {
-  fill: none;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-dasharray: 8 10;
-}
-
-.chakra-visualizer__flow-front {
-  filter: drop-shadow(0 0 7px rgba(176, 120, 255, 0.34));
-  animation: chakraFlowForward 7s linear infinite;
-}
-
-.chakra-visualizer__flow-back {
-  opacity: 0.72;
-  filter: drop-shadow(0 0 6px rgba(108, 184, 255, 0.28));
-  animation: chakraFlowBackward 7s linear infinite;
-}
-
-.chakra-visualizer__flow-pulse {
-  opacity: 0.9;
-}
-
-.chakra-visualizer__flow-pulse--front {
-  fill: #ffc6ff;
-  filter: drop-shadow(0 0 6px rgba(255, 191, 255, 0.85));
-}
-
-.chakra-visualizer__flow-pulse--back {
-  fill: #a8d2ff;
-  filter: drop-shadow(0 0 6px rgba(168, 210, 255, 0.8));
-}
-
 .chakra-visualizer__body-image {
   width: 100%;
   height: 100%;
@@ -174,7 +126,6 @@
 }
 
 .chakra-visualizer__node {
-  --node-size: 1.3rem;
   position: absolute;
   left: 50%;
   top: var(--chakra-y);
@@ -182,11 +133,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border: none;
-  border-radius: 999px;
+  border-radius: 0;
   background: transparent;
   color: #fff;
   cursor: pointer;
@@ -205,32 +156,6 @@
 .chakra-visualizer__node:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.78);
   outline-offset: 4px;
-}
-
-.chakra-visualizer__node-ring,
-.chakra-visualizer__node-core {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.chakra-visualizer__node-ring {
-  inset: 0;
-  border: 1px solid color-mix(in srgb, var(--chakra-color) 80%, white 20%);
-  box-shadow:
-    0 0 20px color-mix(in srgb, var(--chakra-color) 60%, transparent),
-    inset 0 0 18px color-mix(in srgb, var(--chakra-color) 30%, transparent);
-  animation: chakraHaloPulse 4.8s ease-in-out infinite;
-}
-
-.chakra-visualizer__node-core {
-  width: var(--node-size);
-  height: var(--node-size);
-  background: radial-gradient(circle at 35% 30%, #ffffff, var(--chakra-color) 55%, #000000 140%);
-  box-shadow:
-    0 0 18px color-mix(in srgb, var(--chakra-color) 82%, white 18%),
-    0 0 40px color-mix(in srgb, var(--chakra-color) 62%, transparent);
-  animation: chakraCorePulse 3.8s ease-in-out infinite;
 }
 
 .chakra-visualizer__node-label {
@@ -279,14 +204,11 @@
   filter: brightness(1.2);
 }
 
-.chakra-visualizer__node--active .chakra-visualizer__node-ring {
-  animation-duration: 2.5s;
-  transform: scale(1.16);
-}
-
-.chakra-visualizer__node--active .chakra-visualizer__node-core {
-  animation-duration: 2.2s;
-  transform: scale(1.18);
+.chakra-visualizer__node--active .chakra-visualizer__node-label {
+  border-color: color-mix(in srgb, var(--chakra-color) 55%, rgba(255, 255, 255, 0.12));
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.28),
+    0 0 0 1px color-mix(in srgb, var(--chakra-color) 35%, transparent);
 }
 
 .chakra-visualizer__rail {
@@ -522,52 +444,6 @@
   }
 }
 
-@keyframes chakraHaloPulse {
-  0%,
-  100% {
-    opacity: 0.74;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.08);
-  }
-}
-
-@keyframes chakraCorePulse {
-  0%,
-  100% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.14);
-  }
-}
-
-@keyframes chakraFlowForward {
-  from {
-    stroke-dashoffset: 0;
-  }
-
-  to {
-    stroke-dashoffset: -72;
-  }
-}
-
-@keyframes chakraFlowBackward {
-  from {
-    stroke-dashoffset: 0;
-  }
-
-  to {
-    stroke-dashoffset: 72;
-  }
-}
-
 @keyframes chakraSheetUp {
   from {
     opacity: 0;
@@ -619,8 +495,8 @@
   }
 
   .chakra-visualizer__node {
-    width: 3.7rem;
-    height: 3.7rem;
+    width: 2.75rem;
+    height: 2.75rem;
   }
 
   .chakra-visualizer__node-label {
@@ -713,9 +589,5 @@
     transition-duration: 0.01ms !important;
     transition-delay: 0ms !important;
     scroll-behavior: auto !important;
-  }
-
-  .chakra-visualizer__flow-pulse {
-    display: none;
   }
 }

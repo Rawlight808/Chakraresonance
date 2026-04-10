@@ -130,50 +130,12 @@ export function ChakraVisualizer({ showScreensaverOption = true }: ChakraVisuali
   const titleId = useId()
   const panelId = useId()
   const descriptionId = `${panelId}-description`
-  const frontGradientId = `${panelId}-flow-front-gradient`
-  const backGradientId = `${panelId}-flow-back-gradient`
 
   const activeChakra = chakraMap.get(activeId) ?? chakraProfiles[0]
   const isExpanded = expandedIds[activeChakra.id] ?? false
   const activeScreensaver = showScreensaverOption
     ? chakraScreensavers[activeChakra.id]
     : null
-  const flowPoints = useMemo(
-    () =>
-      chakraProfiles.map((chakra) => ({
-        x: 250,
-        y: (chakra.bodyPosition / 100) * 500,
-      })),
-    [],
-  )
-  const frontFlowPath = useMemo(() => {
-    if (flowPoints.length < 2) return ''
-
-    let path = `M ${flowPoints[0].x} ${flowPoints[0].y}`
-    for (let idx = 1; idx < flowPoints.length; idx += 1) {
-      const prevPoint = flowPoints[idx - 1]
-      const point = flowPoints[idx]
-      const controlY = (prevPoint.y + point.y) / 2
-      path += ` C ${prevPoint.x + 22} ${controlY} ${point.x + 22} ${controlY} ${point.x} ${point.y}`
-    }
-
-    return path
-  }, [flowPoints])
-  const backFlowPath = useMemo(() => {
-    if (flowPoints.length < 2) return ''
-
-    const descending = [...flowPoints].reverse()
-    let path = `M ${descending[0].x} ${descending[0].y}`
-    for (let idx = 1; idx < descending.length; idx += 1) {
-      const prevPoint = descending[idx - 1]
-      const point = descending[idx]
-      const controlY = (prevPoint.y + point.y) / 2
-      path += ` C ${prevPoint.x - 22} ${controlY} ${point.x - 22} ${controlY} ${point.x} ${point.y}`
-    }
-
-    return path
-  }, [flowPoints])
-  const fullFlowPath = `${frontFlowPath} ${backFlowPath}`.trim()
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 900px)')
@@ -326,58 +288,6 @@ export function ChakraVisualizer({ showScreensaverOption = true }: ChakraVisuali
               role="list"
               aria-label="Vertical chakra visualizer"
             >
-              {/* Animated energy loop: up the front (root to crown), down the back (crown to root). */}
-              <svg
-                className="chakra-visualizer__flow"
-                viewBox="0 0 500 500"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <defs>
-                  <linearGradient id={frontGradientId} x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="#ff6a63" />
-                    <stop offset="46%" stopColor="#6ce896" />
-                    <stop offset="100%" stopColor="#d892ff" />
-                  </linearGradient>
-                  <linearGradient id={backGradientId} x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#c38cff" />
-                    <stop offset="52%" stopColor="#72b7ff" />
-                    <stop offset="100%" stopColor="#ff6a63" />
-                  </linearGradient>
-                </defs>
-
-                <path
-                  className="chakra-visualizer__flow-track"
-                  d={fullFlowPath}
-                />
-                <path
-                  className="chakra-visualizer__flow-front"
-                  d={frontFlowPath}
-                  stroke={`url(#${frontGradientId})`}
-                />
-                <path
-                  className="chakra-visualizer__flow-back"
-                  d={backFlowPath}
-                  stroke={`url(#${backGradientId})`}
-                />
-
-                <circle className="chakra-visualizer__flow-pulse chakra-visualizer__flow-pulse--front" r="6">
-                  <animateMotion
-                    dur="4.8s"
-                    repeatCount="indefinite"
-                    path={frontFlowPath}
-                  />
-                </circle>
-                <circle className="chakra-visualizer__flow-pulse chakra-visualizer__flow-pulse--back" r="5">
-                  <animateMotion
-                    dur="4.8s"
-                    repeatCount="indefinite"
-                    path={backFlowPath}
-                  />
-                </circle>
-              </svg>
-
-              {/* Reuse the existing body image and layer interactive chakra nodes over it. */}
               <img
                 src={chakraBodyReference}
                 alt="Meditating human figure with chakra alignment points"
@@ -414,8 +324,6 @@ export function ChakraVisualizer({ showScreensaverOption = true }: ChakraVisuali
                     aria-pressed={isActive}
                     aria-controls={panelId}
                   >
-                    <span className="chakra-visualizer__node-ring" aria-hidden="true" />
-                    <span className="chakra-visualizer__node-core" aria-hidden="true" />
                     <span className="chakra-visualizer__node-label">
                       {chakra.name}
                       <span>{chakra.sanskritName}</span>
