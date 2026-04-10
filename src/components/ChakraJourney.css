@@ -344,6 +344,13 @@
   padding: 2rem 2rem 2.25rem;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
   border: 1px solid transparent;
+  opacity: 1;
+  transition: opacity 0.8s ease, background 1.2s ease, border-color 1.2s ease;
+}
+
+.chakra-journey__main--fading {
+  opacity: 0;
+  transition: opacity 0.8s ease;
 }
 
 .chakra-header {
@@ -504,10 +511,31 @@
   margin-top: -0.4rem;
 }
 
-.chakra-visual__tone-volume-icon {
+.chakra-visual__tone-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.75);
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
   flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.chakra-visual__tone-toggle:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.chakra-visual__tone-toggle--active {
+  border-color: currentColor;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .chakra-visual__tone-volume-slider {
@@ -888,11 +916,47 @@
   gap: 0.5rem;
 }
 
+.playlist-zone__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .playlist-zone__label {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.45);
+}
+
+.playlist-zone__toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.playlist-zone__toggle-btn {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.playlist-zone__toggle-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.playlist-zone__toggle-btn--active {
+  font-weight: 600;
 }
 
 /* ── Visual zone ─────────────────────────────────── */
@@ -1129,6 +1193,16 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 1;
+  transition: opacity 1.2s ease;
+}
+
+.journey-color-immersion__video--entering {
+  opacity: 0;
+}
+
+.journey-color-immersion__video--exiting {
+  opacity: 0;
 }
 
 .journey-color-immersion__hint {
