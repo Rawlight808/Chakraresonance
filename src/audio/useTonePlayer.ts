@@ -18,7 +18,7 @@ const FADE_IN = 0.4
 const FADE_OUT = 0.3
 const CROSSFADE = 0.8
 const MAX_GAIN = 0.35
-const DEFAULT_VOLUME = 0.75
+const DEFAULT_VOLUME = 0.35
 
 export function useTonePlayer(): TonePlayer {
   const audioContextRef = useRef<AudioContext | null>(null)

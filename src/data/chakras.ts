@@ -56,7 +56,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Uhhh',
     vowelLabel: 'UH',
     essentialOils: ['Vetiver', 'Cedarwood', 'Patchouli'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'sacral-up',
@@ -79,7 +79,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Ooooh',
     vowelLabel: 'OO',
     essentialOils: ['Ylang Ylang', 'Sweet Orange', 'Sandalwood'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'solar-up',
@@ -102,7 +102,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Woh',
     vowelLabel: 'OH',
     essentialOils: ['Lemon', 'Ginger', 'Chamomile'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'heart-up',
@@ -125,7 +125,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Ahhh',
     vowelLabel: 'AH',
     essentialOils: ['Rose', 'Bergamot', 'Eucalyptus'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'throat-up',
@@ -148,7 +148,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Ayyy',
     vowelLabel: 'AY',
     essentialOils: ['Peppermint', 'Tea Tree', 'Spearmint'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'third-eye-up',
@@ -171,7 +171,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Eeee',
     vowelLabel: 'EE',
     essentialOils: ['Lavender', 'Frankincense', 'Clary Sage'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'crown',
@@ -194,7 +194,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Nnnnnn',
     vowelLabel: 'NN (or Silence)',
     essentialOils: ['Frankincense', 'Myrrh', 'Lotus'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
 
   // ── Descending (back of body) ──────────────────────────
@@ -219,7 +219,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Eeee',
     vowelLabel: 'EE',
     essentialOils: ['Lavender', 'Frankincense', 'Clary Sage'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'throat-down',
@@ -242,7 +242,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Ayyy',
     vowelLabel: 'AY',
     essentialOils: ['Peppermint', 'Tea Tree', 'Spearmint'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'heart-down',
@@ -265,7 +265,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Ahhh',
     vowelLabel: 'AH',
     essentialOils: ['Rose', 'Bergamot', 'Eucalyptus'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'solar-down',
@@ -288,7 +288,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Woh',
     vowelLabel: 'OH',
     essentialOils: ['Lemon', 'Ginger', 'Chamomile'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'sacral-down',
@@ -311,7 +311,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Ooooh',
     vowelLabel: 'OO',
     essentialOils: ['Ylang Ylang', 'Sweet Orange', 'Sandalwood'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
   {
     id: 'root-down',
@@ -334,7 +334,7 @@ export const journeySteps: ChakraStep[] = [
     vowelSound: 'Uhhh',
     vowelLabel: 'UH',
     essentialOils: ['Vetiver', 'Cedarwood', 'Patchouli'],
-    durationSeconds: 240,
+    durationSeconds: 830,
   },
 ]
 

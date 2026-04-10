@@ -83,6 +83,8 @@ export function ChakraJourney() {
 
   const wantsTone = audioMode === 'tone' || audioMode === 'both'
   const wantsMusic = audioMode === 'music' || audioMode === 'both'
+  const wantsMusicRef = useRef(wantsMusic)
+  wantsMusicRef.current = wantsMusic
   const hasSongs = songs.length > 0
 
   const getNextAutoSong = useCallback((chakraId: ChakraId, note: string) => {
@@ -172,6 +174,14 @@ export function ChakraJourney() {
   )
 
   const handleAutoSongEnd = useCallback(() => {
+    if (elapsedRef.current < step.durationSeconds) {
+      const nextSong = getNextAutoSong(step.chakraId, step.note)
+      if (nextSong) {
+        playSong(nextSong.file, { onEnded: handleSongEndRef.current })
+        return
+      }
+    }
+
     if (currentIndex < totalSteps - 1) {
       goToStep(currentIndex + 1)
       return
@@ -180,7 +190,7 @@ export function ChakraJourney() {
     stopTone()
     stopSong()
     setJourneyComplete(true)
-  }, [currentIndex, goToStep, stopSong, stopTone])
+  }, [currentIndex, getNextAutoSong, goToStep, playSong, step.chakraId, step.durationSeconds, step.note, stopSong, stopTone])
 
   const handleManualSongEnd = useCallback(() => {
     const queueKey = `${step.chakraId}:${step.note}`
@@ -293,7 +303,7 @@ export function ChakraJourney() {
   }, [stopSong, stopTone])
 
   useEffect(() => {
-    if (mode !== 'auto' || journeyComplete || wantsMusic) return
+    if (mode !== 'auto' || journeyComplete) return
 
     elapsedRef.current = 0
 
@@ -301,7 +311,7 @@ export function ChakraJourney() {
       elapsedRef.current += 1
       setElapsed(elapsedRef.current)
 
-      if (elapsedRef.current >= step.durationSeconds) {
+      if (!wantsMusicRef.current && elapsedRef.current >= step.durationSeconds) {
         elapsedRef.current = 0
         if (currentIndex < totalSteps - 1) {
           goToStep(currentIndex + 1)
@@ -319,7 +329,7 @@ export function ChakraJourney() {
         timerRef.current = null
       }
     }
-  }, [mode, currentIndex, step.durationSeconds, goToStep, stopSong, stopTone, journeyComplete, wantsMusic])
+  }, [mode, currentIndex, step.durationSeconds, goToStep, stopSong, stopTone, journeyComplete])
 
   useEffect(() => {
     if (!isScreensaverOpen) return
@@ -537,11 +547,9 @@ export function ChakraJourney() {
     setMusicVolume(Number(event.target.value))
   }
 
-  const progress = mode === 'auto' && wantsMusic && musicDuration > 0
-    ? musicProgress / musicDuration
-    : step.durationSeconds > 0
-      ? elapsed / step.durationSeconds
-      : 0
+  const progress = step.durationSeconds > 0
+    ? Math.min(elapsed / step.durationSeconds, 1)
+    : 0
   const directionLabel = step.direction === 'ascending' ? 'Ascending' : 'Descending'
   const directionSymbol = step.direction === 'ascending' ? '↑' : '↓'
 
@@ -770,9 +778,7 @@ export function ChakraJourney() {
                 />
               </div>
               <span className="chakra-timer__label">
-                {mode === 'auto' && wantsMusic && musicDuration > 0
-                  ? `${formatTime(musicProgress)} / ${formatTime(musicDuration)}`
-                  : `${formatTime(elapsed)} / ${formatTime(step.durationSeconds)}`}
+                {formatTime(elapsed)} / {formatTime(step.durationSeconds)}
               </span>
             </div>
           )}
@@ -935,7 +941,7 @@ export function ChakraJourney() {
                 )}
 
                 {mode === 'auto' && wantsMusic && (
-                  <p className="audio-dock__hint">Moves to the next chakra when the current song ends</p>
+                  <p className="audio-dock__hint">Songs loop until the chakra's time completes, then advances</p>
                 )}
 
                 <p className="audio-dock__shortcuts">
