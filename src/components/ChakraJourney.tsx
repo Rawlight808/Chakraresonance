@@ -53,10 +53,11 @@ export function ChakraJourney() {
   const onSongEnded = useCallback(() => { handleSongEndRef.current() }, [])
   const manualSongIndexRef = useRef<Record<string, number>>({})
   const manualResumePlaybackRef = useRef<{ tone: boolean; music: boolean }>({ tone: false, music: false })
-  const autoToneMutedRef = useRef(false)
+  const toneMutedByUserRef = useRef(false)
   const [displayedScreensaverSrc, setDisplayedScreensaverSrc] = useState(() => chakraScreensavers[journeySteps[0].chakraId])
   const [exitingScreensaverSrc, setExitingScreensaverSrc] = useState<string | null>(null)
   const [crossfadePhase, setCrossfadePhase] = useState<'idle' | 'mounted' | 'fading'>('idle')
+  const screensaverRef = useRef<HTMLDivElement>(null)
 
   const {
     playTone,
@@ -127,7 +128,7 @@ export function ChakraJourney() {
       stopTone()
     }
     if (!oldWantsTone && newWantsTone && mode) {
-      autoToneMutedRef.current = false
+      toneMutedByUserRef.current = false
       void startTone(step.frequencyHz)
     }
 
@@ -202,7 +203,7 @@ export function ChakraJourney() {
     })
 
     await Promise.all([
-      wantsTone ? fadeOutTone() : Promise.resolve(),
+      wantsTone && !toneMutedByUserRef.current ? fadeOutTone() : Promise.resolve(),
       pageFade,
     ])
 
@@ -230,7 +231,7 @@ export function ChakraJourney() {
     autoAdvanceInFlightRef.current = true
 
     manualResumePlaybackRef.current = {
-      tone: wantsTone,
+      tone: wantsTone && !toneMutedByUserRef.current,
       music: wantsMusic,
     }
 
@@ -241,7 +242,7 @@ export function ChakraJourney() {
     })
 
     await Promise.all([
-      wantsTone ? fadeOutTone() : Promise.resolve(),
+      wantsTone && !toneMutedByUserRef.current ? fadeOutTone() : Promise.resolve(),
       pageFade,
     ])
 
@@ -322,7 +323,7 @@ export function ChakraJourney() {
         const startManualResume = async () => {
           if (isCancelled) return
 
-          if (resume.tone && wantsTone) {
+          if (resume.tone && wantsTone && !toneMutedByUserRef.current) {
             await playTone(step.frequencyHz)
           }
 
@@ -348,7 +349,7 @@ export function ChakraJourney() {
       setIsPageFading(false)
 
       const startAutoStep = async () => {
-        if (wantsTone && !autoToneMutedRef.current) {
+        if (wantsTone && !toneMutedByUserRef.current) {
           await playTone(step.frequencyHz)
         }
 
@@ -401,7 +402,7 @@ export function ChakraJourney() {
     }
 
     autoAdvanceInFlightRef.current = false
-    autoToneMutedRef.current = false
+    toneMutedByUserRef.current = false
     manualSongIndexRef.current = {}
     setMode(selectedMode)
     setCurrentIndex(0)
@@ -440,16 +441,19 @@ export function ChakraJourney() {
       setIsScreensaverHintVisible(false)
     }, 2000)
 
-    const handleEscape = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape') {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsScreensaverHintVisible(false)
         setIsScreensaverOpen(false)
+        setExitingScreensaverSrc(null)
+        setCrossfadePhase('idle')
       }
     }
 
-    window.addEventListener('keydown', handleEscape)
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => {
       window.clearTimeout(hintTimer)
-      window.removeEventListener('keydown', handleEscape)
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
     }
   }, [isScreensaverOpen])
 
@@ -496,9 +500,17 @@ export function ChakraJourney() {
     setCrossfadePhase('idle')
     setIsScreensaverHintVisible(true)
     setIsScreensaverOpen(true)
+
+    requestAnimationFrame(() => {
+      screensaverRef.current?.requestFullscreen?.().catch(() => {})
+    })
   }, [screensaverSrc])
 
   const closeScreensaver = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {})
+      return
+    }
     setIsScreensaverHintVisible(false)
     setIsScreensaverOpen(false)
     setExitingScreensaverSrc(null)
@@ -509,9 +521,9 @@ export function ChakraJourney() {
     if (!wantsTone) return
     if (toneIsPlaying) {
       stopTone()
-      autoToneMutedRef.current = true
+      toneMutedByUserRef.current = true
     } else {
-      autoToneMutedRef.current = false
+      toneMutedByUserRef.current = false
       void startTone(step.frequencyHz)
     }
   }
@@ -599,7 +611,7 @@ export function ChakraJourney() {
         if (anythingPlaying) {
           if (toneIsPlaying) {
             stopTone()
-            autoToneMutedRef.current = true
+            toneMutedByUserRef.current = true
           }
           if (musicIsPlaying) pauseSong()
           return
@@ -1230,10 +1242,13 @@ export function ChakraJourney() {
       </div>
 
       {isScreensaverOpen && (
-        <button
-          type="button"
+        <div
+          ref={screensaverRef}
           className="journey-color-immersion"
           onClick={closeScreensaver}
+          onKeyDown={(e) => { if (e.key === 'Escape' || e.key === ' ') closeScreensaver() }}
+          role="button"
+          tabIndex={0}
           aria-label={`Close ${step.name} full-screen screensaver`}
         >
           {exitingScreensaverSrc && (
@@ -1272,7 +1287,7 @@ export function ChakraJourney() {
           >
             Tap or click anywhere to close
           </span>
-        </button>
+        </div>
       )}
     </div>
   )

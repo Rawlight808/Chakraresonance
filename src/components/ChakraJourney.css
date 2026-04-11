@@ -1185,6 +1185,11 @@
   justify-content: center;
   overflow: hidden;
   background: #04060d;
+  outline: none;
+}
+
+.journey-color-immersion:fullscreen {
+  position: relative;
 }
 
 .journey-color-immersion__video {
