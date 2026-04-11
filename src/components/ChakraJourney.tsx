@@ -53,6 +53,7 @@ export function ChakraJourney() {
   const onSongEnded = useCallback(() => { handleSongEndRef.current() }, [])
   const manualSongIndexRef = useRef<Record<string, number>>({})
   const manualResumePlaybackRef = useRef<{ tone: boolean; music: boolean }>({ tone: false, music: false })
+  const autoToneMutedRef = useRef(false)
   const [displayedScreensaverSrc, setDisplayedScreensaverSrc] = useState(() => chakraScreensavers[journeySteps[0].chakraId])
   const [exitingScreensaverSrc, setExitingScreensaverSrc] = useState<string | null>(null)
   const [crossfadePhase, setCrossfadePhase] = useState<'idle' | 'mounted' | 'fading'>('idle')
@@ -126,6 +127,7 @@ export function ChakraJourney() {
       stopTone()
     }
     if (!oldWantsTone && newWantsTone && mode) {
+      autoToneMutedRef.current = false
       void startTone(step.frequencyHz)
     }
 
@@ -346,7 +348,7 @@ export function ChakraJourney() {
       setIsPageFading(false)
 
       const startAutoStep = async () => {
-        if (wantsTone) {
+        if (wantsTone && !autoToneMutedRef.current) {
           await playTone(step.frequencyHz)
         }
 
@@ -399,6 +401,7 @@ export function ChakraJourney() {
     }
 
     autoAdvanceInFlightRef.current = false
+    autoToneMutedRef.current = false
     manualSongIndexRef.current = {}
     setMode(selectedMode)
     setCurrentIndex(0)
@@ -506,7 +509,9 @@ export function ChakraJourney() {
     if (!wantsTone) return
     if (toneIsPlaying) {
       stopTone()
+      autoToneMutedRef.current = true
     } else {
+      autoToneMutedRef.current = false
       void startTone(step.frequencyHz)
     }
   }
@@ -592,7 +597,10 @@ export function ChakraJourney() {
         const anythingPlaying = toneIsPlaying || musicIsPlaying
 
         if (anythingPlaying) {
-          if (toneIsPlaying) stopTone()
+          if (toneIsPlaying) {
+            stopTone()
+            autoToneMutedRef.current = true
+          }
           if (musicIsPlaying) pauseSong()
           return
         }
