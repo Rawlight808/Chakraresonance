@@ -32,6 +32,39 @@ function getRandomSong(songs: ChakraSong[]) {
   return songs[randomIndex] ?? null
 }
 
+/** Speaker + wave arcs in the style of Apple Music / SF Symbols (outline). */
+function JourneyVolumeIcon({ volume, className }: { volume: number; className?: string }) {
+  const muted = volume <= 0
+  const waves = muted ? 0 : volume < 1 / 3 ? 1 : volume < 2 / 3 ? 2 : 3
+
+  return (
+    <svg
+      className={['journey-volume-icon', className].filter(Boolean).join(' ')}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      focusable="false"
+    >
+      <path d="M3 9v6h3l5 5V4L6 9H3Z" />
+      {!muted && waves >= 1 && (
+        <path d="M13.807 10.943a2.25 2.25 0 0 1 0 3.182" />
+      )}
+      {!muted && waves >= 2 && (
+        <path d="M16.463 8.288a5.25 5.25 0 0 1 0 7.424" />
+      )}
+      {!muted && waves >= 3 && (
+        <path d="M19.114 5.636a9 9 0 0 1 0 12.728" />
+      )}
+      {muted && <path d="M14.25 8.25 21.75 17.75" />}
+    </svg>
+  )
+}
+
 export function ChakraJourney() {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -978,6 +1011,7 @@ export function ChakraJourney() {
                 >
                   {toneIsPlaying ? '⏹' : '▶'}
                 </button>
+                <JourneyVolumeIcon volume={toneVolume} className="chakra-visual__tone-vol-icon" />
                 <input
                   type="range"
                   min="0"
@@ -1085,7 +1119,7 @@ export function ChakraJourney() {
                     </button>
                     <div className="music-player__bottom">
                       <div className="audio-dock__volume">
-                        <span className="audio-dock__vol-icon" aria-hidden="true">♫</span>
+                        <JourneyVolumeIcon volume={musicVolume} className="audio-dock__vol-icon" />
                         <input
                           type="range"
                           min="0"
