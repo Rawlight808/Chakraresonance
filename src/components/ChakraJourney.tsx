@@ -104,6 +104,7 @@ export function ChakraJourney() {
   } = useTonePlayer()
   const {
     playSong,
+    loadSongAt,
     pauseSong,
     resumeSong,
     seekTo,
@@ -753,11 +754,25 @@ export function ChakraJourney() {
   ])
 
   const handleSeek = (event: MouseEvent<HTMLButtonElement>) => {
-    if (musicDuration <= 0) return
-
     const rect = event.currentTarget.getBoundingClientRect()
-    const clickRatio = (event.clientX - rect.left) / rect.width
-    seekTo(clickRatio * musicDuration)
+    const clickRatio = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1)
+
+    if (musicDuration > 0) {
+      seekTo(clickRatio * musicDuration)
+      return
+    }
+
+    // No song loaded yet — load the selected song and move the playhead to
+    // the clicked position but stay paused. User must press play to begin.
+    const activeSongFile = currentSong ?? selectedSongFile ?? songs[0]?.file ?? null
+    if (!activeSongFile) return
+
+    const songIdx = songs.findIndex((s) => s.file === activeSongFile)
+    if (songIdx >= 0) {
+      manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = songIdx
+      setSelectedSongFile(activeSongFile)
+    }
+    loadSongAt(activeSongFile, clickRatio, { onEnded: onSongEnded })
   }
 
   const formatTime = (seconds: number) => {
@@ -1135,8 +1150,8 @@ export function ChakraJourney() {
                       type="button"
                       className="audio-dock__seek"
                       onClick={handleSeek}
-                      aria-label={musicDuration > 0 ? 'Seek within song' : 'Song progress'}
-                      disabled={musicDuration <= 0}
+                      aria-label={musicDuration > 0 ? 'Seek within song' : 'Start playing from this position'}
+                      disabled={!currentSong && !selectedSongFile && songs.length === 0}
                     >
                       <div
                         className="audio-dock__seek-fill"

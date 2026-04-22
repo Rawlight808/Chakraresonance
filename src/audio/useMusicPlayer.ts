@@ -1,7 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+export interface PlaySongOptions {
+  onEnded?: () => void
+  /** Optional 0..1 offset within the song to start at once metadata loads. */
+  startRatio?: number
+}
+
 export interface MusicPlayerState {
-  playSong: (url: string, options?: { onEnded?: () => void }) => void
+  playSong: (url: string, options?: PlaySongOptions) => void
+  /**
+   * Load `url` (if not already) and seek to `ratio * duration`, but do NOT
+   * start playback. User must press play to begin. Useful for click-to-seek
+   * on a song that hasn't been played yet.
+   */
+  loadSongAt: (url: string, ratio: number, options?: { onEnded?: () => void }) => void
   pauseSong: () => void
   resumeSong: () => void
   seekTo: (timeSeconds: number) => void
@@ -19,6 +31,7 @@ export interface MusicPlayerState {
 export function useMusicPlayer(): MusicPlayerState {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const onEndedRef = useRef<(() => void) | null>(null)
+  const pendingStartRatioRef = useRef<number | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +46,12 @@ export function useMusicPlayer(): MusicPlayerState {
   const updateProgress = useCallback(() => {
     const audio = audioRef.current
     if (audio && !audio.paused) {
-      setProgress(audio.currentTime)
+      // While the browser is still committing a seek, audio.currentTime can
+      // momentarily report the pre-seek value. Skipping setProgress prevents
+      // the bar from snapping backward before the seek finishes.
+      if (!audio.seeking) {
+        setProgress(audio.currentTime)
+      }
       setDuration(audio.duration || 0)
       rafRef.current = requestAnimationFrame(updateProgressRef.current)
     }
@@ -71,6 +89,22 @@ export function useMusicPlayer(): MusicPlayerState {
     audio.addEventListener('loadedmetadata', () => {
       setDuration(audio.duration)
       setIsLoading(false)
+
+      const pendingRatio = pendingStartRatioRef.current
+      if (pendingRatio != null && audio.duration > 0) {
+        pendingStartRatioRef.current = null
+        const target = Math.min(Math.max(pendingRatio, 0), 1) * audio.duration
+        try {
+          audio.currentTime = target
+          setProgress(target)
+        } catch {
+          // Some browsers throw if set too early — the seeked event below will catch up.
+        }
+      }
+    })
+
+    audio.addEventListener('seeked', () => {
+      setProgress(audio.currentTime)
     })
 
     audio.addEventListener('error', () => {
@@ -85,7 +119,7 @@ export function useMusicPlayer(): MusicPlayerState {
   }, [stopProgressLoop])
 
   const playSong = useCallback(
-    (url: string, options?: { onEnded?: () => void }) => {
+    (url: string, options?: PlaySongOptions) => {
       const audio = getAudioEl()
 
       // Swap handler per-call without rebinding listeners (preserves gesture).
@@ -96,12 +130,26 @@ export function useMusicPlayer(): MusicPlayerState {
       setIsLoading(true)
       setError(null)
       setCurrentSong(url)
-      setProgress(0)
+
+      const ratio = options?.startRatio != null
+        ? Math.min(Math.max(options.startRatio, 0), 1)
+        : null
 
       if (audio.src !== url) {
+        // New track — defer ratio-based seek until metadata loads.
+        pendingStartRatioRef.current = ratio
+        setProgress(0)
         audio.src = url
+      } else if (ratio != null && audio.duration > 0) {
+        // Same track, duration known — seek immediately.
+        pendingStartRatioRef.current = null
+        const target = ratio * audio.duration
+        audio.currentTime = target
+        setProgress(target)
       } else {
+        pendingStartRatioRef.current = null
         audio.currentTime = 0
+        setProgress(0)
       }
 
       audio.play().then(() => {
@@ -114,6 +162,64 @@ export function useMusicPlayer(): MusicPlayerState {
       })
     },
     [getAudioEl, updateProgress, stopProgressLoop],
+  )
+
+  const loadSongAt = useCallback(
+    (url: string, ratio: number, options?: { onEnded?: () => void }) => {
+      const audio = getAudioEl()
+      onEndedRef.current = options?.onEnded ?? null
+
+      stopProgressLoop()
+      setError(null)
+      setCurrentSong(url)
+
+      const clampedRatio = Math.min(Math.max(ratio, 0), 1)
+
+      // Same track, already has metadata — just seek and stay paused.
+      if (audio.src === url && audio.duration > 0) {
+        audio.pause()
+        const target = clampedRatio * audio.duration
+        audio.currentTime = target
+        setProgress(target)
+        setIsPlaying(false)
+        setIsLoading(false)
+        pendingStartRatioRef.current = null
+        return
+      }
+
+      // Metadata not loaded yet. Safari requires a play() call inside the user
+      // gesture to unlock the element for future playback; do it muted so it's
+      // silent, then pause + seek as soon as metadata arrives. The main
+      // loadedmetadata handler in getAudioEl consumes pendingStartRatioRef.
+      pendingStartRatioRef.current = clampedRatio
+      setProgress(0)
+      setIsLoading(true)
+      setIsPlaying(false)
+
+      const wasMuted = audio.muted
+      audio.muted = true
+
+      if (audio.src !== url) {
+        audio.src = url
+      }
+
+      const pauseWhenReady = () => {
+        audio.removeEventListener('loadedmetadata', pauseWhenReady)
+        audio.pause()
+        audio.muted = wasMuted
+        setIsPlaying(false)
+        setIsLoading(false)
+      }
+      audio.addEventListener('loadedmetadata', pauseWhenReady)
+
+      audio.play().catch(() => {
+        audio.removeEventListener('loadedmetadata', pauseWhenReady)
+        audio.muted = wasMuted
+        setIsLoading(false)
+        setIsPlaying(false)
+      })
+    },
+    [getAudioEl, stopProgressLoop],
   )
 
   const pauseSong = useCallback(() => {
@@ -186,7 +292,7 @@ export function useMusicPlayer(): MusicPlayerState {
   }, [stopProgressLoop])
 
   return {
-    playSong, pauseSong, resumeSong, seekTo, stopSong, setVolume,
+    playSong, loadSongAt, pauseSong, resumeSong, seekTo, stopSong, setVolume,
     isPlaying, isLoading, error, currentSong, progress, duration, volume,
   }
 }
