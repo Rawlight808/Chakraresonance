@@ -18,6 +18,7 @@ export interface MusicPlayerState {
 
 export function useMusicPlayer(): MusicPlayerState {
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const onEndedRef = useRef<(() => void) | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -49,41 +50,59 @@ export function useMusicPlayer(): MusicPlayerState {
     }
   }, [])
 
+  // Reuse one <audio> element across all tracks. Safari ties the user-gesture
+  // unlock to a specific HTMLAudioElement; creating a new Audio() inside an
+  // 'ended' callback (especially right after a fullscreen transition) drops
+  // that token and .play() gets blocked. Reusing the element preserves it.
+  const getAudioEl = useCallback(() => {
+    if (audioRef.current) return audioRef.current
+
+    const audio = new Audio()
+    audio.preload = 'auto'
+    audio.volume = volumeRef.current
+
+    audio.addEventListener('ended', () => {
+      setIsPlaying(false)
+      setProgress(0)
+      stopProgressLoop()
+      onEndedRef.current?.()
+    })
+
+    audio.addEventListener('loadedmetadata', () => {
+      setDuration(audio.duration)
+      setIsLoading(false)
+    })
+
+    audio.addEventListener('error', () => {
+      setIsLoading(false)
+      setIsPlaying(false)
+      setError('Unable to load this track')
+      stopProgressLoop()
+    })
+
+    audioRef.current = audio
+    return audio
+  }, [stopProgressLoop])
+
   const playSong = useCallback(
     (url: string, options?: { onEnded?: () => void }) => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        stopProgressLoop()
-      }
+      const audio = getAudioEl()
+
+      // Swap handler per-call without rebinding listeners (preserves gesture).
+      onEndedRef.current = options?.onEnded ?? null
+
+      stopProgressLoop()
 
       setIsLoading(true)
       setError(null)
-
-      const audio = new Audio(url)
-      audio.volume = volumeRef.current
-
-      audio.addEventListener('ended', () => {
-        setIsPlaying(false)
-        setProgress(0)
-        stopProgressLoop()
-        options?.onEnded?.()
-      })
-
-      audio.addEventListener('loadedmetadata', () => {
-        setDuration(audio.duration)
-        setIsLoading(false)
-      })
-
-      audio.addEventListener('error', () => {
-        setIsLoading(false)
-        setIsPlaying(false)
-        setError('Unable to load this track')
-        stopProgressLoop()
-      })
-
-      audioRef.current = audio
       setCurrentSong(url)
       setProgress(0)
+
+      if (audio.src !== url) {
+        audio.src = url
+      } else {
+        audio.currentTime = 0
+      }
 
       audio.play().then(() => {
         setIsPlaying(true)
@@ -94,7 +113,7 @@ export function useMusicPlayer(): MusicPlayerState {
         setError('Playback was blocked — tap anywhere and try again')
       })
     },
-    [updateProgress, stopProgressLoop],
+    [getAudioEl, updateProgress, stopProgressLoop],
   )
 
   const pauseSong = useCallback(() => {
@@ -127,11 +146,17 @@ export function useMusicPlayer(): MusicPlayerState {
   }, [])
 
   const stopSong = useCallback(() => {
+    // Keep the audio element alive so Safari retains its user-gesture unlock;
+    // just pause and reset state. The element is only torn down on unmount.
     if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
-      audioRef.current = null
+      try {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      } catch {
+        // Safari can throw if currentTime is set before metadata — ignore.
+      }
     }
+    onEndedRef.current = null
     setIsPlaying(false)
     setCurrentSong(null)
     setProgress(0)

@@ -212,6 +212,17 @@ export function ChakraJourney() {
   const goToStep = useCallback(
     (nextIndex: number) => {
       if (nextIndex < 0 || nextIndex >= totalSteps) return
+
+      if (mode === 'manual') {
+        // Tone is handled live via crossfadeTo below, so keep tone=false here.
+        // Music auto-starts on the new chakra only if it was actively playing;
+        // this preserves paused / never-started states.
+        manualResumePlaybackRef.current = {
+          tone: false,
+          music: musicIsPlaying,
+        }
+      }
+
       setCurrentIndex(nextIndex)
 
       const wantsToneNow = audioMode === 'tone' || audioMode === 'both'
@@ -221,7 +232,7 @@ export function ChakraJourney() {
         void crossfadeTo(journeySteps[nextIndex].frequencyHz)
       }
     },
-    [mode, audioMode, crossfadeTo, toneIsPlaying],
+    [mode, audioMode, crossfadeTo, toneIsPlaying, musicIsPlaying],
   )
 
   const handleAutoSongEnd = useCallback(async () => {
@@ -354,19 +365,24 @@ export function ChakraJourney() {
         let isCancelled = false
 
         const startManualResume = async () => {
-          if (isCancelled) return
+          try {
+            // Kick music first so it never waits on playTone/AudioContext resume,
+            // which can stall after fullscreen transitions in some browsers.
+            if (resume.music && wantsMusic) {
+              playSong(selectedSong.file, { onEnded: onSongEnded })
+            }
 
-          if (resume.tone && wantsTone && !toneMutedByUserRef.current) {
-            await playTone(step.frequencyHz)
+            if (isCancelled) return
+
+            if (resume.tone && wantsTone && !toneMutedByUserRef.current) {
+              await playTone(step.frequencyHz)
+            }
+          } finally {
+            // Always unlock: if React Strict Mode or deps re-run cancels this effect,
+            // early returns above skip the old tail assignment and would otherwise leave
+            // autoAdvanceInFlightRef stuck true — blocking the next song-end advance.
+            autoAdvanceInFlightRef.current = false
           }
-
-          if (isCancelled) return
-
-          if (resume.music && wantsMusic) {
-            playSong(selectedSong.file, { onEnded: onSongEnded })
-          }
-
-          autoAdvanceInFlightRef.current = false
         }
 
         void startManualResume()
@@ -382,27 +398,30 @@ export function ChakraJourney() {
       setIsPageFading(false)
 
       const startAutoStep = async () => {
-        if (wantsTone && !toneMutedByUserRef.current) {
-          await playTone(step.frequencyHz)
-        }
+        try {
+          if (isCancelled) return
 
-        if (isCancelled) return
+          if (wantsTone && !toneMutedByUserRef.current) {
+            await playTone(step.frequencyHz)
+          }
 
-        if (!selectedSong) {
+          if (isCancelled) return
+
+          if (!selectedSong) {
+            return
+          }
+
+          setSelectedSongFile(selectedSong.file)
+
+          if (wantsMusic) {
+            playSong(
+              selectedSong.file,
+              { onEnded: onSongEnded },
+            )
+          }
+        } finally {
           autoAdvanceInFlightRef.current = false
-          return
         }
-
-        setSelectedSongFile(selectedSong.file)
-
-        if (wantsMusic) {
-          playSong(
-            selectedSong.file,
-            { onEnded: onSongEnded },
-          )
-        }
-
-        autoAdvanceInFlightRef.current = false
       }
 
       void startAutoStep()
@@ -519,7 +538,7 @@ export function ChakraJourney() {
     const timerId = window.setTimeout(() => {
       setExitingScreensaverSrc(null)
       setCrossfadePhase('idle')
-    }, 1300)
+    }, 2600)
 
     return () => {
       cancelAnimationFrame(rafId)
@@ -528,6 +547,8 @@ export function ChakraJourney() {
   }, [crossfadePhase])
 
   const openScreensaver = useCallback(() => {
+    const wasMusicPlaying = musicIsPlaying
+
     setDisplayedScreensaverSrc(screensaverSrc)
     setExitingScreensaverSrc(null)
     setCrossfadePhase('idle')
@@ -535,9 +556,17 @@ export function ChakraJourney() {
     setIsScreensaverOpen(true)
 
     requestAnimationFrame(() => {
-      screensaverRef.current?.requestFullscreen?.().catch(() => {})
+      screensaverRef.current?.requestFullscreen?.()
+        .then(() => {
+          // Some browsers suspend <audio> when entering element fullscreen with heavy video.
+          // If music was playing before fullscreen, nudge playback back on so `ended` still fires.
+          if (wasMusicPlaying) {
+            resumeSong()
+          }
+        })
+        .catch(() => {})
     })
-  }, [screensaverSrc])
+  }, [screensaverSrc, musicIsPlaying, resumeSong])
 
   const closeScreensaver = useCallback(() => {
     if (document.fullscreenElement) {

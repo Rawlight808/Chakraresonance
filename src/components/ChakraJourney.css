@@ -1208,7 +1208,7 @@
   height: 100%;
   object-fit: cover;
   opacity: 1;
-  transition: opacity 1.2s ease;
+  transition: opacity 2.4s ease;
 }
 
 .journey-color-immersion__video--entering {
