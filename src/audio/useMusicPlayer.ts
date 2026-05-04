@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { mediaUrl } from '../lib/media'
 
 export interface PlaySongOptions {
   onEnded?: () => void
@@ -122,6 +123,12 @@ export function useMusicPlayer(): MusicPlayerState {
     (url: string, options?: PlaySongOptions) => {
       const audio = getAudioEl()
 
+      // `url` is the logical path stored in chakraSongs (e.g. /audio/root/Foo.mp3);
+      // `resolved` is the actual fetchable URL on the configured CDN/bucket.
+      // Keep `currentSong` as the logical path so `song.file === currentSong`
+      // comparisons in the UI keep working regardless of where media is hosted.
+      const resolved = mediaUrl(url)
+
       // Swap handler per-call without rebinding listeners (preserves gesture).
       onEndedRef.current = options?.onEnded ?? null
 
@@ -135,11 +142,11 @@ export function useMusicPlayer(): MusicPlayerState {
         ? Math.min(Math.max(options.startRatio, 0), 1)
         : null
 
-      if (audio.src !== url) {
+      if (audio.src !== resolved) {
         // New track — defer ratio-based seek until metadata loads.
         pendingStartRatioRef.current = ratio
         setProgress(0)
-        audio.src = url
+        audio.src = resolved
       } else if (ratio != null && audio.duration > 0) {
         // Same track, duration known — seek immediately.
         pendingStartRatioRef.current = null
@@ -167,6 +174,7 @@ export function useMusicPlayer(): MusicPlayerState {
   const loadSongAt = useCallback(
     (url: string, ratio: number, options?: { onEnded?: () => void }) => {
       const audio = getAudioEl()
+      const resolved = mediaUrl(url)
       onEndedRef.current = options?.onEnded ?? null
 
       stopProgressLoop()
@@ -176,7 +184,7 @@ export function useMusicPlayer(): MusicPlayerState {
       const clampedRatio = Math.min(Math.max(ratio, 0), 1)
 
       // Same track, already has metadata — just seek and stay paused.
-      if (audio.src === url && audio.duration > 0) {
+      if (audio.src === resolved && audio.duration > 0) {
         audio.pause()
         const target = clampedRatio * audio.duration
         audio.currentTime = target
@@ -199,8 +207,8 @@ export function useMusicPlayer(): MusicPlayerState {
       const wasMuted = audio.muted
       audio.muted = true
 
-      if (audio.src !== url) {
-        audio.src = url
+      if (audio.src !== resolved) {
+        audio.src = resolved
       }
 
       const pauseWhenReady = () => {

@@ -8,6 +8,7 @@ import { useMusicPlayer } from '../audio/useMusicPlayer'
 import { chakraSongs } from '../data/chakraSongs'
 import type { ChakraSong } from '../data/chakraSongs'
 import { chakraScreensavers } from '../data/chakraScreensavers'
+import { mediaUrl } from '../lib/media'
 import { BodySilhouette } from './BodySilhouette'
 import './ChakraJourney.css'
 
@@ -1336,7 +1337,7 @@ export function ChakraJourney() {
                 'journey-color-immersion__video',
                 crossfadePhase === 'fading' ? 'journey-color-immersion__video--exiting' : '',
               ].join(' ').trim()}
-              src={exitingScreensaverSrc}
+              src={mediaUrl(exitingScreensaverSrc)}
               autoPlay
               muted
               loop
@@ -1350,7 +1351,7 @@ export function ChakraJourney() {
               'journey-color-immersion__video',
               crossfadePhase === 'mounted' ? 'journey-color-immersion__video--entering' : '',
             ].join(' ').trim()}
-            src={displayedScreensaverSrc}
+            src={mediaUrl(displayedScreensaverSrc)}
             autoPlay
             muted
             loop

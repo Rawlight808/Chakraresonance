@@ -4,6 +4,7 @@ import chakraBodyReference from '../assets/chakra-body-reference.png'
 import { chakraProfiles } from '../data/chakraProfiles'
 import type { ChakraId, ChakraProfile } from '../data/chakraProfiles'
 import { chakraScreensavers } from '../data/chakraScreensavers'
+import { mediaUrl } from '../lib/media'
 import './ChakraVisualizer.css'
 
 type ChakraDetailsPanelProps = {
@@ -419,7 +420,7 @@ export function ChakraVisualizer({ showScreensaverOption = true }: ChakraVisuali
           <video
             key={activeScreensaver}
             className="chakra-visualizer__color-immersion-video"
-            src={activeScreensaver}
+            src={mediaUrl(activeScreensaver)}
             autoPlay
             muted
             loop
