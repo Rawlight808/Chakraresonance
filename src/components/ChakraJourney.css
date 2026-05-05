@@ -1438,12 +1438,13 @@
   }
 
   /* Make the fixed top progress bar clear the iPhone notch / Dynamic Island
-     and leave room on the left for the floating Exit button. Centering the
-     dots within remaining space still works because justify-content: center
-     respects the padded box. */
+     in portrait and the bezel insets in landscape. The floating Exit button
+     overlays this bar at a higher z-index with its own pill background, so
+     we don't need asymmetric padding to "make room" — the dots stay truly
+     centered across the screen and Exit floats on top of them on the left. */
   .journey-progress {
     padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
-    padding-left: calc(env(safe-area-inset-left, 0px) + 5rem);
+    padding-left: calc(env(safe-area-inset-left, 0px) + 1rem);
     padding-right: calc(env(safe-area-inset-right, 0px) + 1rem);
   }
 
@@ -1464,6 +1465,39 @@
   .journey-select__btn {
     width: 100%;
     max-width: 280px;
+  }
+}
+
+/* Phone-landscape: short, wide viewport. The default mobile rules above
+   stack everything vertically which wastes the limited vertical real
+   estate. Here we keep the chakra header horizontal, tighten the type,
+   and let the journey grid breathe horizontally. Targets devices where
+   the height drops below ~500px (i.e. iPhone landscape). */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  .chakra-journey__content {
+    /* Reduce the top buffer in landscape — the .journey-progress bar is
+       slimmer than on portrait phones and we don't want to give up half
+       the visible area to top whitespace. */
+    padding-top: calc(env(safe-area-inset-top, 0px) + 2.25rem);
+  }
+
+  .chakra-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .chakra-header__title {
+    font-size: 1.25rem;
+  }
+
+  .chakra-header__location {
+    font-size: 0.85rem;
+  }
+
+  .chakra-header__eyebrow {
+    font-size: 0.65rem;
+    margin-bottom: 0.15rem;
   }
 }
 

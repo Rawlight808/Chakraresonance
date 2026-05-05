@@ -9,6 +9,7 @@ import { chakraSongs } from '../data/chakraSongs'
 import type { ChakraSong } from '../data/chakraSongs'
 import { chakraScreensavers } from '../data/chakraScreensavers'
 import { mediaUrl } from '../lib/media'
+import { setStatusBarVisible } from '../lib/native'
 import { BodySilhouette } from './BodySilhouette'
 import './ChakraJourney.css'
 
@@ -711,6 +712,14 @@ export function ChakraJourney() {
       window.clearTimeout(hintTimer)
       document.removeEventListener('fullscreenchange', handleFullscreenChange)
     }
+  }, [isScreensaverOpen])
+
+  // Native iOS: hide the system status bar when the screensaver enters
+  // immersive fullscreen so the chakra video reaches edge-to-edge with no
+  // bezel of carrier/clock/battery glyphs at the top. Restored on close.
+  // No-ops on web (the helper short-circuits when not on a native platform).
+  useEffect(() => {
+    setStatusBarVisible(!isScreensaverOpen)
   }, [isScreensaverOpen])
 
   // When the chakra changes, fade the screensaver across to the new clip.
