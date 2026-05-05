@@ -505,7 +505,10 @@ export function ChakraJourney() {
     if (selectedMode === 'auto') {
       autoSongQueueRef.current = {}
       autoSongIndexRef.current = {}
-      setAudioMode('both')
+      // Auto mode used to also start the chakra tone alongside music; some
+      // users find that overwhelming on first listen. Default to music-only
+      // and let the user opt into 'both' (or 'tone') via the audio toggle.
+      setAudioMode('music')
     }
 
     autoAdvanceInFlightRef.current = false
