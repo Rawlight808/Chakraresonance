@@ -20,6 +20,14 @@ export interface MusicPlayerState {
   seekTo: (timeSeconds: number) => void
   stopSong: () => void
   setVolume: (nextVolume: number) => void
+  /**
+   * Toggle whether the current song repeats forever. While loop is on, the
+   * `ended` event never fires, so any `onEnded` callback (including journey
+   * auto-advance) is naturally suppressed. Loop resets to false whenever a
+   * new song starts via playSong / loadSongAt.
+   */
+  toggleLoop: () => void
+  isLooping: boolean
   isPlaying: boolean
   isLoading: boolean
   error: string | null
@@ -41,6 +49,7 @@ export function useMusicPlayer(): MusicPlayerState {
   const [duration, setDuration] = useState(0)
   const [volume, setVolumeState] = useState(0.85)
   const volumeRef = useRef(0.85)
+  const [isLooping, setIsLooping] = useState(false)
   const rafRef = useRef<number | null>(null)
   const updateProgressRef = useRef<() => void>(() => {})
 
@@ -141,6 +150,12 @@ export function useMusicPlayer(): MusicPlayerState {
 
       stopProgressLoop()
 
+      // Loop is per-playback: starting a new song should never inherit a
+      // previous song's loop state. Clear both the audio attribute and the
+      // visible toggle so the UI matches the underlying behavior.
+      audio.loop = false
+      setIsLooping(false)
+
       setIsLoading(true)
       setError(null)
       setCurrentSong(url)
@@ -185,6 +200,9 @@ export function useMusicPlayer(): MusicPlayerState {
       onEndedRef.current = options?.onEnded ?? null
 
       stopProgressLoop()
+      // Same loop-reset rationale as playSong: don't inherit prior loop state.
+      audio.loop = false
+      setIsLooping(false)
       setError(null)
       setCurrentSong(url)
 
@@ -273,6 +291,7 @@ export function useMusicPlayer(): MusicPlayerState {
       try {
         audioRef.current.pause()
         audioRef.current.currentTime = 0
+        audioRef.current.loop = false
       } catch {
         // Safari can throw if currentTime is set before metadata — ignore.
       }
@@ -283,8 +302,19 @@ export function useMusicPlayer(): MusicPlayerState {
     setProgress(0)
     setDuration(0)
     setError(null)
+    setIsLooping(false)
     stopProgressLoop()
   }, [stopProgressLoop])
+
+  const toggleLoop = useCallback(() => {
+    setIsLooping((prev) => {
+      const next = !prev
+      if (audioRef.current) {
+        audioRef.current.loop = next
+      }
+      return next
+    })
+  }, [])
 
   const setVolume = useCallback((nextVolume: number) => {
     const normalizedVolume = Math.max(0, Math.min(1, nextVolume))
@@ -308,6 +338,7 @@ export function useMusicPlayer(): MusicPlayerState {
 
   return {
     playSong, loadSongAt, pauseSong, resumeSong, seekTo, stopSong, setVolume,
+    toggleLoop, isLooping,
     isPlaying, isLoading, error, currentSong, progress, duration, volume,
   }
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, MouseEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { journeySteps, totalSteps } from '../data/chakras'
 import type { ChakraId } from '../data/chakras'
 import { useTonePlayer } from '../audio/useTonePlayer'
@@ -14,6 +14,13 @@ import './ChakraJourney.css'
 
 type JourneyMode = 'auto' | 'manual' | null
 type AudioMode = 'tone' | 'music' | 'both'
+/**
+ * In manual mode, how many songs play before auto-advancing to the next
+ * chakra. 'all' plays through every song in the chakra's playlist (the
+ * legacy "Full Playlist" behavior). The count resets whenever the chakra
+ * step changes (manual nav or auto-advance).
+ */
+type ManualSongLimit = 1 | 3 | 'all'
 const AUTO_CYCLE_TARGET = 3
 
 function shuffleSongs(songs: ChakraSong[]) {
@@ -76,9 +83,16 @@ export function ChakraJourney() {
   const [isScreensaverOpen, setIsScreensaverOpen] = useState(false)
   const [isScreensaverHintVisible, setIsScreensaverHintVisible] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
+  // Track which song's share button was most recently clicked so the row can
+  // show a brief "Copied!" pill. null when no recent share is being indicated.
+  const [shareCopiedFile, setShareCopiedFile] = useState<string | null>(null)
   const [selectedSongFile, setSelectedSongFile] = useState<string | null>(null)
   const [isPageFading, setIsPageFading] = useState(false)
-  const [manualPlayFullPlaylist, setManualPlayFullPlaylist] = useState(true)
+  const [manualSongLimit, setManualSongLimit] = useState<ManualSongLimit>('all')
+  // Counts how many songs have ended in the current manual-mode chakra. Reset
+  // to 0 whenever the journey step changes so a manual jump always gets the
+  // full song-limit budget on the new chakra.
+  const manualSongsEndedRef = useRef(0)
   const prevStepRef = useRef<string | null>(null)
   const autoSongQueueRef = useRef<Record<string, ChakraSong[]>>({})
   const autoSongIndexRef = useRef<Record<string, number>>({})
@@ -88,6 +102,11 @@ export function ChakraJourney() {
   const manualSongIndexRef = useRef<Record<string, number>>({})
   const manualResumePlaybackRef = useRef<{ tone: boolean; music: boolean }>({ tone: false, music: false })
   const toneMutedByUserRef = useRef(false)
+  // When a visitor lands on /journey?song=..., this ref holds the requested
+  // song file across the synchronous startJourney → step-change-effect chain
+  // so the effect plays the requested song instead of a random one. The ref
+  // is consumed (cleared) by the step-change effect on first read.
+  const pendingShareSongRef = useRef<string | null>(null)
   // Two stable video slots for the fullscreen screensaver crossfade. Each slot
   // is a persistent <video> element (stable React key) so the previously-
   // playing video keeps decoding while we load the next chakra into the other
@@ -119,6 +138,8 @@ export function ChakraJourney() {
     seekTo,
     stopSong,
     setVolume: setMusicVolume,
+    toggleLoop: toggleMusicLoop,
+    isLooping: musicIsLooping,
     isPlaying: musicIsPlaying,
     isLoading: musicIsLoading,
     error: musicError,
@@ -302,21 +323,30 @@ export function ChakraJourney() {
 
     manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = 0
 
-    if (currentIndex < totalSteps - 1) {
-      setCurrentIndex(currentIndex + 1)
-    } else {
-      manualResumePlaybackRef.current = { tone: false, music: false }
-      setIsPageFading(false)
-      finishJourney()
-    }
-  }, [currentIndex, fadeOutTone, finishJourney, step.chakraId, step.note, wantsTone, wantsMusic])
+    // Manual mode cycles continuously: when we'd run off the end of the
+    // journey, wrap back to the first step instead of calling finishJourney.
+    // The user stops the loop explicitly via the Exit button.
+    setCurrentIndex(currentIndex < totalSteps - 1 ? currentIndex + 1 : 0)
+  }, [currentIndex, fadeOutTone, step.chakraId, step.note, wantsTone, wantsMusic])
 
   const handleManualSongEnd = useCallback(() => {
-    if (!manualPlayFullPlaylist) {
+    manualSongsEndedRef.current += 1
+
+    // 1-song mode advances after every song.
+    if (manualSongLimit === 1) {
       void advanceManualStep()
       return
     }
 
+    // 3-song mode plays up to 3 songs, then advances.
+    if (manualSongLimit === 3 && manualSongsEndedRef.current >= 3) {
+      void advanceManualStep()
+      return
+    }
+
+    // 'all' mode (and 3-song mode while still under the cap) queues the next
+    // song from the chakra's playlist. If we hit the end of the list before
+    // reaching the cap, advance to the next chakra anyway.
     const queueKey = `${step.chakraId}:${step.note}`
     const currentManualIdx = manualSongIndexRef.current[queueKey] ?? 0
     const nextManualIdx = currentManualIdx + 1
@@ -327,7 +357,7 @@ export function ChakraJourney() {
     } else {
       void advanceManualStep()
     }
-  }, [advanceManualStep, manualPlayFullPlaylist, playSong, songs, step.chakraId, step.note])
+  }, [advanceManualStep, manualSongLimit, playSong, songs, step.chakraId, step.note])
 
   useEffect(() => {
     handleSongEndRef.current = mode === 'auto'
@@ -345,10 +375,25 @@ export function ChakraJourney() {
     if (isStepChanged || isFirstStep) {
       stopSong()
       manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = 0
+      // Fresh chakra → fresh song-limit budget, regardless of how we got here
+      // (auto-advance from a previous chakra, manual nav, share-link landing).
+      manualSongsEndedRef.current = 0
 
-      const selectedSong = mode === 'auto'
-        ? getNextAutoSong(step.chakraId, step.note)
-        : getRandomSong(songs)
+      // Manual mode normally picks a random song; share-link landings inject a
+      // specific song via pendingShareSongRef so the visitor lands on the song
+      // someone actually shared. The ref is consumed on first use.
+      let selectedSong: ChakraSong | null
+      if (mode === 'auto') {
+        selectedSong = getNextAutoSong(step.chakraId, step.note)
+      } else {
+        const pending = pendingShareSongRef.current
+        if (pending) {
+          pendingShareSongRef.current = null
+          selectedSong = songs.find((s) => s.file === pending) ?? getRandomSong(songs)
+        } else {
+          selectedSong = getRandomSong(songs)
+        }
+      }
 
       /* eslint-disable react-hooks/set-state-in-effect -- intentional: sync UI with step transition */
       if (mode === 'manual') {
@@ -471,13 +516,45 @@ export function ChakraJourney() {
     setCompletedCycles(0)
     setJourneyComplete(false)
     setIsPageFading(false)
-    setManualPlayFullPlaylist(true)
+    setManualSongLimit('all')
+    manualSongsEndedRef.current = 0
     manualResumePlaybackRef.current = { tone: false, music: false }
     prevStepRef.current = journeySteps[0].id
     setIsScreensaverOpen(false)
     setIsScreensaverHintVisible(false)
     setSelectedSongFile(null)
   }
+
+  // Variant of startJourney used when a visitor opens a /journey?song=… link.
+  // Drops them straight into manual mode at the song's chakra in 1-song mode,
+  // with auto-play primed (manualResumePlaybackRef), tone off so the focus is
+  // the shared track, and pendingShareSongRef set so the step-change effect
+  // plays the requested song instead of a random pick from the playlist.
+  const startJourneyFromShareLink = useCallback(
+    (stepIndex: number, songFile: string) => {
+      autoAdvanceInFlightRef.current = false
+      toneMutedByUserRef.current = false
+      manualSongIndexRef.current = {}
+      manualSongsEndedRef.current = 0
+      pendingShareSongRef.current = songFile
+      manualResumePlaybackRef.current = { tone: false, music: true }
+      setAudioMode('music')
+      setMode('manual')
+      setCurrentIndex(stepIndex)
+      setCompletedCycles(0)
+      setJourneyComplete(false)
+      setIsPageFading(false)
+      setManualSongLimit(1)
+      // Force the step-change effect to treat this as a real transition. If
+      // the share link points at step 0 the isFirstStep branch covers it; for
+      // any other index, isStepChanged fires because prev !== step.id.
+      prevStepRef.current = journeySteps[0].id
+      setIsScreensaverOpen(false)
+      setIsScreensaverHintVisible(false)
+      setSelectedSongFile(songFile)
+    },
+    [],
+  )
 
   const exitJourney = useCallback(() => {
     autoAdvanceInFlightRef.current = false
@@ -490,11 +567,63 @@ export function ChakraJourney() {
     setCompletedCycles(0)
     setJourneyComplete(false)
     setIsPageFading(false)
-    setManualPlayFullPlaylist(true)
+    setManualSongLimit('all')
+    manualSongsEndedRef.current = 0
     manualResumePlaybackRef.current = { tone: false, music: false }
     setSelectedSongFile(null)
     prevStepRef.current = null
   }, [stopSong, stopTone])
+
+  // Detect /journey?song=… on first mount and route the visitor straight to
+  // the shared song in manual mode. Runs once per component instance; the
+  // search param is cleared after handling so a refresh starts fresh.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const handledShareLinkRef = useRef(false)
+
+  useEffect(() => {
+    if (handledShareLinkRef.current) return
+    const songParam = searchParams.get('song')
+    if (!songParam) return
+    handledShareLinkRef.current = true
+
+    // Restore the leading /audio/ that buildSongShareUrl strips for brevity.
+    const fullPath = songParam.startsWith('/audio/') ? songParam : `/audio/${songParam}`
+
+    let foundChakraId: ChakraId | null = null
+    let foundSong: ChakraSong | null = null
+    for (const id of Object.keys(chakraSongs) as ChakraId[]) {
+      const match = chakraSongs[id].find((s) => s.file === fullPath)
+      if (match) {
+        foundChakraId = id
+        foundSong = match
+        break
+      }
+    }
+
+    if (!foundChakraId || !foundSong) {
+      // Unknown song — clear the param so refresh doesn't keep retrying and
+      // let the visitor pick a journey mode normally.
+      setSearchParams({}, { replace: true })
+      return
+    }
+
+    // Prefer the ascending journey step that matches both chakra and note;
+    // fall back to any step on that chakra if the note doesn't line up.
+    const ascendingIdx = journeySteps.findIndex(
+      (s) => s.chakraId === foundChakraId && s.note === foundSong!.note && s.direction === 'ascending',
+    )
+    const targetIdx = ascendingIdx >= 0
+      ? ascendingIdx
+      : journeySteps.findIndex((s) => s.chakraId === foundChakraId)
+
+    if (targetIdx < 0) {
+      setSearchParams({}, { replace: true })
+      return
+    }
+
+    startJourneyFromShareLink(targetIdx, foundSong.file)
+    setSearchParams({}, { replace: true })
+  }, [searchParams, setSearchParams, startJourneyFromShareLink])
 
   useEffect(() => {
     if (!isScreensaverOpen) return
@@ -672,6 +801,36 @@ export function ChakraJourney() {
     manualSongIndexRef.current[`${step.chakraId}:${step.note}`] = prevIdx
     setSelectedSongFile(songs[prevIdx].file)
     playSong(songs[prevIdx].file, { onEnded: onSongEnded })
+  }
+
+  // Build a share URL that recipients can open to land directly on this song.
+  // Format: <origin>/journey?song=<chakra>/<filename>. We strip the leading
+  // /audio/ from song.file because every track lives there; the loader on
+  // the receiving side adds it back.
+  const buildSongShareUrl = (file: string): string => {
+    const stripped = file.startsWith('/audio/') ? file.slice('/audio/'.length) : file
+    const params = new URLSearchParams({ song: stripped })
+    return `${window.location.origin}/journey?${params.toString()}`
+  }
+
+  const handleSongShare = async (file: string, event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation()
+    const url = buildSongShareUrl(file)
+    try {
+      // Prefer the native share sheet on mobile; fall back to clipboard on
+      // desktop and on any platform where the share dialog is unavailable.
+      if (navigator.share) {
+        await navigator.share({ title: 'Chakra Resonance', url })
+      } else {
+        await navigator.clipboard.writeText(url)
+      }
+      setShareCopiedFile(file)
+      window.setTimeout(() => {
+        setShareCopiedFile((current) => (current === file ? null : current))
+      }, 1800)
+    } catch {
+      // User cancelled the share sheet, or clipboard write was blocked.
+    }
   }
 
   const handleMusicPlayPause = () => {
@@ -1184,6 +1343,22 @@ export function ChakraJourney() {
                         >
                           ⏭
                         </button>
+                        <button
+                          type="button"
+                          className={`audio-dock__transport-btn audio-dock__transport-btn--loop${musicIsLooping ? ' audio-dock__transport-btn--loop-on' : ''}`}
+                          style={musicIsLooping ? { color: step.color, borderColor: `${step.color}55`, background: `${step.color}1a` } : { color: step.color }}
+                          onClick={toggleMusicLoop}
+                          aria-label={musicIsLooping ? 'Stop looping song' : 'Loop current song'}
+                          aria-pressed={musicIsLooping}
+                          disabled={!currentSong && !selectedSongFile}
+                        >
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <polyline points="17 1 21 5 17 9" />
+                            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                            <polyline points="7 23 3 19 7 15" />
+                            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                     <button
@@ -1243,27 +1418,27 @@ export function ChakraJourney() {
                       {step.name} Playlist
                     </div>
                     {mode === 'manual' && (
-                      <div className="playlist-zone__toggle" role="radiogroup" aria-label="Playlist advance mode">
-                        <button
-                          type="button"
-                          className={`playlist-zone__toggle-btn${manualPlayFullPlaylist ? ' playlist-zone__toggle-btn--active' : ''}`}
-                          style={manualPlayFullPlaylist ? { borderColor: `${step.color}66`, background: `${step.color}22`, color: step.color } : {}}
-                          onClick={() => setManualPlayFullPlaylist(true)}
-                          role="radio"
-                          aria-checked={manualPlayFullPlaylist}
-                        >
-                          Full Playlist
-                        </button>
-                        <button
-                          type="button"
-                          className={`playlist-zone__toggle-btn${!manualPlayFullPlaylist ? ' playlist-zone__toggle-btn--active' : ''}`}
-                          style={!manualPlayFullPlaylist ? { borderColor: `${step.color}66`, background: `${step.color}22`, color: step.color } : {}}
-                          onClick={() => setManualPlayFullPlaylist(false)}
-                          role="radio"
-                          aria-checked={!manualPlayFullPlaylist}
-                        >
-                          Single Song
-                        </button>
+                      <div className="playlist-zone__toggle" role="radiogroup" aria-label="Songs per chakra before advancing">
+                        {([
+                          { value: 1 as const, label: '1 Song' },
+                          { value: 3 as const, label: '3 Songs' },
+                          { value: 'all' as const, label: 'Full Playlist' },
+                        ]).map(({ value, label }) => {
+                          const isActive = manualSongLimit === value
+                          return (
+                            <button
+                              key={String(value)}
+                              type="button"
+                              className={`playlist-zone__toggle-btn${isActive ? ' playlist-zone__toggle-btn--active' : ''}`}
+                              style={isActive ? { borderColor: `${step.color}66`, background: `${step.color}22`, color: step.color } : {}}
+                              onClick={() => setManualSongLimit(value)}
+                              role="radio"
+                              aria-checked={isActive}
+                            >
+                              {label}
+                            </button>
+                          )
+                        })}
                       </div>
                     )}
                   </div>
@@ -1271,21 +1446,46 @@ export function ChakraJourney() {
                     <div className="music-playlist__list" role="list">
                       {songs.map((song) => {
                         const isActive = (currentSong ?? selectedSongFile) === song.file
+                        const isShareCopied = shareCopiedFile === song.file
                         return (
-                          <button
+                          <div
                             key={song.file}
-                            type="button"
                             role="listitem"
                             className={`music-playlist__item ${isActive ? 'music-playlist__item--active' : ''}`}
                             style={isActive ? { background: `${step.color}22`, borderColor: `${step.color}44` } : {}}
-                            onClick={() => handleSongSelect(song.file)}
                             aria-current={isActive ? 'true' : undefined}
                           >
-                            <span className="music-playlist__item-icon" style={isActive ? { color: step.color } : {}} aria-hidden="true">
-                              {isActive && musicIsPlaying ? '⏸' : '▶'}
-                            </span>
-                            <span className="music-playlist__item-title">{song.title}</span>
-                          </button>
+                            <button
+                              type="button"
+                              className="music-playlist__item-select"
+                              onClick={() => handleSongSelect(song.file)}
+                              aria-label={`Play ${song.title}`}
+                            >
+                              <span className="music-playlist__item-icon" style={isActive ? { color: step.color } : {}} aria-hidden="true">
+                                {isActive && musicIsPlaying ? '⏸' : '▶'}
+                              </span>
+                              <span className="music-playlist__item-title">{song.title}</span>
+                            </button>
+                            <button
+                              type="button"
+                              className={`music-playlist__item-share${isShareCopied ? ' music-playlist__item-share--copied' : ''}`}
+                              style={isShareCopied ? { color: step.color } : {}}
+                              onClick={(e) => { void handleSongShare(song.file, e) }}
+                              aria-label={isShareCopied ? `Link to ${song.title} copied` : `Share link to ${song.title}`}
+                            >
+                              {isShareCopied ? (
+                                <span className="music-playlist__item-share-text">Copied</span>
+                              ) : (
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <circle cx="18" cy="5" r="3" />
+                                  <circle cx="6" cy="12" r="3" />
+                                  <circle cx="18" cy="19" r="3" />
+                                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
                         )
                       })}
                     </div>
@@ -1328,12 +1528,17 @@ export function ChakraJourney() {
                   type="button"
                   className="btn btn--ghost"
                   onClick={() => {
-                    goToStep(currentIndex - 1)
+                    // Manual mode loops continuously, so Previous on step 0
+                    // wraps to the final step. Auto mode keeps finite bounds.
+                    const prevIndex = currentIndex === 0
+                      ? (mode === 'manual' ? totalSteps - 1 : 0)
+                      : currentIndex - 1
+                    goToStep(prevIndex)
                     if (mode === 'manual' && toneIsPlaying) {
-                      void crossfadeTo(journeySteps[Math.max(0, currentIndex - 1)].frequencyHz)
+                      void crossfadeTo(journeySteps[prevIndex].frequencyHz)
                     }
                   }}
-                  disabled={currentIndex === 0}
+                  disabled={mode !== 'manual' && currentIndex === 0}
                 >
                   ← Previous
                 </button>
@@ -1346,12 +1551,19 @@ export function ChakraJourney() {
                       if (mode === 'manual' && toneIsPlaying) {
                         void crossfadeTo(journeySteps[currentIndex + 1].frequencyHz)
                       }
+                    } else if (mode === 'manual') {
+                      // Manual mode loops continuously: wrap back to step 0
+                      // instead of ending the journey.
+                      goToStep(0)
+                      if (toneIsPlaying) {
+                        void crossfadeTo(journeySteps[0].frequencyHz)
+                      }
                     } else {
                       finishJourney()
                     }
                   }}
                 >
-                  {currentIndex === totalSteps - 1 ? 'Complete' : 'Next'} →
+                  {mode !== 'manual' && currentIndex === totalSteps - 1 ? 'Complete' : 'Next'} →
                 </button>
               </div>
             </div>

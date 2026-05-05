@@ -788,6 +788,43 @@
   background: rgba(0, 0, 0, 0.3);
 }
 
+.audio-dock__transport-btn--loop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid transparent;
+  margin-left: 0.15rem;
+}
+
+.audio-dock__transport-btn--loop:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.audio-dock__transport-btn--loop:disabled:hover {
+  background: none;
+  transform: none;
+}
+
+.audio-dock__transport-btn--loop-on {
+  position: relative;
+}
+
+.audio-dock__transport-btn--loop-on::after {
+  content: '';
+  position: absolute;
+  bottom: 0.15rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 50%;
+  background: currentColor;
+  pointer-events: none;
+}
+
 .audio-dock__volume {
   flex: 1;
   min-width: 0;
@@ -1251,15 +1288,9 @@
 
 .music-playlist__item {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.85rem;
-  border: none;
+  align-items: stretch;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  background: transparent;
   color: rgba(255, 255, 255, 0.65);
-  cursor: pointer;
-  text-align: left;
   font-size: 0.82rem;
   transition: background 0.15s, color 0.15s;
 }
@@ -1272,6 +1303,21 @@
 .music-playlist__item--active {
   color: #fff;
   border-left: 2px solid currentColor;
+}
+
+.music-playlist__item-select {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
 }
 
 .music-playlist__item-icon {
@@ -1287,6 +1333,36 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.music-playlist__item-share {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  padding: 0 0.6rem;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color 0.15s, background 0.15s;
+}
+
+.music-playlist__item-share:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.music-playlist__item-share--copied {
+  color: currentColor;
+}
+
+.music-playlist__item-share-text {
+  font-weight: 600;
 }
 
 /* ── Responsive ────────────────────────────────────── */
