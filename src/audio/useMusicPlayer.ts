@@ -109,6 +109,13 @@ export function useMusicPlayer(): MusicPlayerState {
     })
 
     audio.addEventListener('error', () => {
+      const me = audio.error
+      // MediaError codes: 1 aborted, 2 network, 3 decode, 4 not supported / often 404
+      console.warn('[useMusicPlayer] audio load failed', {
+        src: audio.currentSrc || audio.src,
+        mediaErrorCode: me?.code,
+        mediaErrorMessage: me?.message,
+      })
       setIsLoading(false)
       setIsPlaying(false)
       setError('Unable to load this track')
