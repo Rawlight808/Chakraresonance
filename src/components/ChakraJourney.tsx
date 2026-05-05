@@ -88,9 +88,17 @@ export function ChakraJourney() {
   const manualSongIndexRef = useRef<Record<string, number>>({})
   const manualResumePlaybackRef = useRef<{ tone: boolean; music: boolean }>({ tone: false, music: false })
   const toneMutedByUserRef = useRef(false)
-  const [displayedScreensaverSrc, setDisplayedScreensaverSrc] = useState(() => chakraScreensavers[journeySteps[0].chakraId])
-  const [exitingScreensaverSrc, setExitingScreensaverSrc] = useState<string | null>(null)
-  const [crossfadePhase, setCrossfadePhase] = useState<'idle' | 'mounted' | 'fading'>('idle')
+  // Two stable video slots for the fullscreen screensaver crossfade. Each slot
+  // is a persistent <video> element (stable React key) so the previously-
+  // playing video keeps decoding while we load the next chakra into the other
+  // slot. Toggling `activeSlot` swaps which slot has the --active CSS class,
+  // and CSS handles the opacity crossfade. Initial values are identical so
+  // both elements pre-warm to the journey's first chakra.
+  const [slotASrc, setSlotASrc] = useState(() => chakraScreensavers[journeySteps[0].chakraId])
+  const [slotBSrc, setSlotBSrc] = useState(() => chakraScreensavers[journeySteps[0].chakraId])
+  const [activeSlot, setActiveSlot] = useState<'a' | 'b'>('a')
+  const slotARef = useRef<HTMLVideoElement>(null)
+  const slotBRef = useRef<HTMLVideoElement>(null)
   const screensaverRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -499,8 +507,6 @@ export function ChakraJourney() {
       if (!document.fullscreenElement) {
         setIsScreensaverHintVisible(false)
         setIsScreensaverOpen(false)
-        setExitingScreensaverSrc(null)
-        setCrossfadePhase('idle')
       }
     }
 
@@ -511,49 +517,84 @@ export function ChakraJourney() {
     }
   }, [isScreensaverOpen])
 
+  // When the chakra changes, fade the screensaver across to the new clip.
+  // Strategy: load the new src into the *inactive* video slot, wait for its
+  // first frame to decode (loadeddata), then toggle activeSlot. The active
+  // slot keeps playing the old chakra without remounting, so it fades out
+  // smoothly even on the very first transition (when no clips are cached).
   useEffect(() => {
-    if (displayedScreensaverSrc === screensaverSrc) return
-
+    /* eslint-disable react-hooks/set-state-in-effect -- intentional: sync slot srcs with derived src */
     if (!isScreensaverOpen) {
-      setDisplayedScreensaverSrc(screensaverSrc)
-      setExitingScreensaverSrc(null)
-      setCrossfadePhase('idle')
+      setSlotASrc(screensaverSrc)
+      setSlotBSrc(screensaverSrc)
       return
     }
 
-    /* eslint-disable react-hooks/set-state-in-effect -- intentional: sync displayed src with derived src */
-    setExitingScreensaverSrc(displayedScreensaverSrc)
-    setDisplayedScreensaverSrc(screensaverSrc)
-    setCrossfadePhase('mounted')
+    const activeSrc = activeSlot === 'a' ? slotASrc : slotBSrc
+    if (activeSrc === screensaverSrc) return
+
+    const targetSlot: 'a' | 'b' = activeSlot === 'a' ? 'b' : 'a'
+    const targetCurrentSrc = targetSlot === 'a' ? slotASrc : slotBSrc
+
+    if (targetCurrentSrc !== screensaverSrc) {
+      // Stage 1: load the new clip into the inactive slot. The effect re-runs
+      // when the slot's src state updates and falls into stage 2 below.
+      if (targetSlot === 'a') setSlotASrc(screensaverSrc)
+      else setSlotBSrc(screensaverSrc)
+      return
+    }
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [screensaverSrc, displayedScreensaverSrc, isScreensaverOpen])
 
-  useEffect(() => {
-    if (crossfadePhase !== 'mounted') return
+    // Stage 2: inactive slot has the target src; wait for its first frame,
+    // then swap active slots so the CSS opacity transition crossfades.
+    const video = (targetSlot === 'a' ? slotARef : slotBRef).current
+    if (!video) return
 
-    const rafId = requestAnimationFrame(() => {
+    let cancelled = false
+    let timeoutId: number | null = null
+
+    const triggerSwap = () => {
+      if (cancelled) return
       requestAnimationFrame(() => {
-        setCrossfadePhase('fading')
+        if (!cancelled) setActiveSlot(targetSlot)
       })
-    })
+    }
 
-    const timerId = window.setTimeout(() => {
-      setExitingScreensaverSrc(null)
-      setCrossfadePhase('idle')
-    }, 2600)
+    if (video.readyState >= 2 /* HAVE_CURRENT_DATA */) {
+      triggerSwap()
+      return () => { cancelled = true }
+    }
+
+    const onLoaded = () => {
+      video.removeEventListener('loadeddata', onLoaded)
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
+      triggerSwap()
+    }
+
+    video.addEventListener('loadeddata', onLoaded)
+    // Safety net: if the browser delays loadeddata (some Safari paths skip
+    // it for cached/short clips), fall through after a short wait so the
+    // fade isn't blocked indefinitely.
+    timeoutId = window.setTimeout(() => {
+      video.removeEventListener('loadeddata', onLoaded)
+      triggerSwap()
+    }, 500)
 
     return () => {
-      cancelAnimationFrame(rafId)
-      window.clearTimeout(timerId)
+      cancelled = true
+      video.removeEventListener('loadeddata', onLoaded)
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
     }
-  }, [crossfadePhase])
+  }, [screensaverSrc, isScreensaverOpen, activeSlot, slotASrc, slotBSrc])
 
   const openScreensaver = useCallback(() => {
     const wasMusicPlaying = musicIsPlaying
 
-    setDisplayedScreensaverSrc(screensaverSrc)
-    setExitingScreensaverSrc(null)
-    setCrossfadePhase('idle')
+    // Pre-warm both slots with the current chakra so slot A is immediately
+    // visible and slot B is decoded and ready for the first crossfade.
+    setSlotASrc(screensaverSrc)
+    setSlotBSrc(screensaverSrc)
+    setActiveSlot('a')
     setIsScreensaverHintVisible(true)
     setIsScreensaverOpen(true)
 
@@ -577,8 +618,6 @@ export function ChakraJourney() {
     }
     setIsScreensaverHintVisible(false)
     setIsScreensaverOpen(false)
-    setExitingScreensaverSrc(null)
-    setCrossfadePhase('idle')
   }, [])
 
   const handleToneToggle = () => {
@@ -1330,28 +1369,28 @@ export function ChakraJourney() {
           tabIndex={0}
           aria-label={`Close ${step.name} full-screen screensaver`}
         >
-          {exitingScreensaverSrc && (
-            <video
-              key={exitingScreensaverSrc}
-              className={[
-                'journey-color-immersion__video',
-                crossfadePhase === 'fading' ? 'journey-color-immersion__video--exiting' : '',
-              ].join(' ').trim()}
-              src={mediaUrl(exitingScreensaverSrc)}
-              autoPlay
-              muted
-              loop
-              playsInline
-              aria-hidden="true"
-            />
-          )}
           <video
-            key={displayedScreensaverSrc}
+            ref={slotARef}
+            key="screensaver-slot-a"
             className={[
               'journey-color-immersion__video',
-              crossfadePhase === 'mounted' ? 'journey-color-immersion__video--entering' : '',
+              activeSlot === 'a' ? 'journey-color-immersion__video--active' : '',
             ].join(' ').trim()}
-            src={mediaUrl(displayedScreensaverSrc)}
+            src={mediaUrl(slotASrc)}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-hidden="true"
+          />
+          <video
+            ref={slotBRef}
+            key="screensaver-slot-b"
+            className={[
+              'journey-color-immersion__video',
+              activeSlot === 'b' ? 'journey-color-immersion__video--active' : '',
+            ].join(' ').trim()}
+            src={mediaUrl(slotBSrc)}
             autoPlay
             muted
             loop

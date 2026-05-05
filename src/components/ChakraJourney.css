@@ -1206,16 +1206,12 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 1;
+  opacity: 0;
   transition: opacity 2.4s ease;
 }
 
-.journey-color-immersion__video--entering {
-  opacity: 0;
-}
-
-.journey-color-immersion__video--exiting {
-  opacity: 0;
+.journey-color-immersion__video--active {
+  opacity: 1;
 }
 
 .journey-color-immersion__hint {
