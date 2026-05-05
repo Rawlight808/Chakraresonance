@@ -577,6 +577,70 @@ export function ChakraJourney() {
     prevStepRef.current = null
   }, [stopSong, stopTone])
 
+  // Swipe-from-left-edge to exit. Mirrors the iOS system back gesture: a
+  // touch that starts within ~24px of the left edge and travels >80px to the
+  // right (without going more than ~50px vertically — that would be a scroll)
+  // triggers exitJourney. Active only while the journey is running and the
+  // screensaver isn't open (the screensaver has its own touch handling and
+  // we don't want a swipe out of the immersive view to land on the chooser).
+  useEffect(() => {
+    if (!mode) return
+    if (isScreensaverOpen) return
+
+    const EDGE_ZONE_PX = 24
+    const TRIGGER_DX_PX = 80
+    const ABORT_DY_PX = 50
+
+    let startX = 0
+    let startY = 0
+    let tracking = false
+
+    const handleStart = (e: TouchEvent) => {
+      const t = e.touches[0]
+      if (!t) return
+      if (t.clientX > EDGE_ZONE_PX) return
+      startX = t.clientX
+      startY = t.clientY
+      tracking = true
+    }
+
+    const handleMove = (e: TouchEvent) => {
+      if (!tracking) return
+      const t = e.touches[0]
+      if (!t) return
+      const dy = Math.abs(t.clientY - startY)
+      if (dy > ABORT_DY_PX) tracking = false
+    }
+
+    const handleEnd = (e: TouchEvent) => {
+      if (!tracking) return
+      tracking = false
+      const t = e.changedTouches[0]
+      if (!t) return
+      const dx = t.clientX - startX
+      const dy = Math.abs(t.clientY - startY)
+      if (dx >= TRIGGER_DX_PX && dy <= ABORT_DY_PX) {
+        exitJourney()
+      }
+    }
+
+    const handleCancel = () => {
+      tracking = false
+    }
+
+    document.addEventListener('touchstart', handleStart, { passive: true })
+    document.addEventListener('touchmove', handleMove, { passive: true })
+    document.addEventListener('touchend', handleEnd, { passive: true })
+    document.addEventListener('touchcancel', handleCancel, { passive: true })
+
+    return () => {
+      document.removeEventListener('touchstart', handleStart)
+      document.removeEventListener('touchmove', handleMove)
+      document.removeEventListener('touchend', handleEnd)
+      document.removeEventListener('touchcancel', handleCancel)
+    }
+  }, [mode, isScreensaverOpen, exitJourney])
+
   // Detect /journey?song=… on first mount and route the visitor straight to
   // the shared song in manual mode. Runs once per component instance; the
   // search param is cleared after handling so a refresh starts fresh.

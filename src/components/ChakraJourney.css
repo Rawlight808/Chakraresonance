@@ -1409,7 +1409,15 @@
 @media (max-width: 900px) {
   .chakra-journey__content {
     grid-template-columns: 1fr;
-    padding: 1rem;
+    /* Pad against the iPhone notch/bezel in landscape (left/right safe areas)
+       and the home indicator at the bottom. The progress bar at top is fixed
+       and handles its own safe-area padding, so we only add a top buffer
+       large enough to clear the bar visually (44px ≈ standard nav height). */
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 2.75rem)
+      calc(env(safe-area-inset-right, 0px) + 1rem)
+      calc(env(safe-area-inset-bottom, 0px) + 1rem)
+      calc(env(safe-area-inset-left, 0px) + 1rem);
   }
 
   .chakra-journey__sidebar {
