@@ -275,7 +275,6 @@ export const chakraSongs: Record<ChakraId, ChakraSong[]> = {
   third_eye: [
     { title: '3rd Eye Journeys',    file: '/audio/third_eye/3rd Eye Journeys.mp3',  note: 'A#' },
     { title: '3rd Eye Wine',        file: '/audio/third_eye/3rd Eye Wine.mp3',      note: 'A#' },
-    { title: 'Abstract Math',       file: '/audio/third_eye/Abstract Math.mp3',     note: 'A#' },
     { title: 'Altered Times',       file: '/audio/third_eye/Altered Times.mp3',     note: 'A#' },
     { title: 'Ascending Dub',       file: '/audio/third_eye/Ascending Dub.mp3',     note: 'A'  },
     { title: 'Careful Glimpse',     file: '/audio/third_eye/Careful Glimpse.mp3',   note: 'A'  },
