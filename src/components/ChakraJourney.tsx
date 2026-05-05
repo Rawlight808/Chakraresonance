@@ -1103,6 +1103,20 @@ export function ChakraJourney() {
         transition: 'background 1.5s ease',
       }}
     >
+      {/* Floating Exit button — phone-only. The sidebar version is hidden on
+          ≤900px so this is the only Exit at that breakpoint. Always visible
+          regardless of scroll, anchored to the top-left safe area so it
+          clears the notch / Dynamic Island. */}
+      <button
+        type="button"
+        className="journey-exit-floating"
+        onClick={exitJourney}
+        aria-label="Exit journey"
+      >
+        <span aria-hidden="true">&larr;</span>
+        <span className="journey-exit-floating__label">Exit</span>
+      </button>
+
       {/* Journey progress dots */}
       <div className="journey-progress" aria-label={`Step ${currentIndex + 1} of ${totalSteps}`}>
         {journeySteps.map((s, i) => (
