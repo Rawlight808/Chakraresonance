@@ -86,19 +86,25 @@ const CONCURRENCY = (() => {
 })()
 
 // Source-folder name → chakra id used by src/data/chakras.ts.
+// Lookup is case-insensitive (see lookupChakra below) so folder names like
+// "3RD CHAKRA E" and "3rd Chakra E" both map to the same chakra.
 const FOLDER_TO_CHAKRA = {
-  '1st CHAKRA':     'root',
-  '2nd CHAKRA C#':  'sacral',
-  '2nd Chakra D':   'sacral',
-  '3RD CHAKRA E':   'solar_plexus',
-  '3rd Chakra Eb':  'solar_plexus',
-  '4th Chakra F':   'heart',
-  '4th Chakra F#':  'heart',
-  '5th Chakra G':   'throat',
-  '5th Chakra G#':  'throat',
-  '6th Chakra A':   'third_eye',
-  '6th Chakra A#':  'third_eye',
-  '7th Chakra':     'crown',
+  '1st chakra':     'root',
+  '2nd chakra c#':  'sacral',
+  '2nd chakra d':   'sacral',
+  '3rd chakra e':   'solar_plexus',
+  '3rd chakra eb':  'solar_plexus',
+  '4th chakra f':   'heart',
+  '4th chakra f#':  'heart',
+  '5th chakra g':   'throat',
+  '5th chakra g#':  'throat',
+  '6th chakra a':   'third_eye',
+  '6th chakra a#':  'third_eye',
+  '7th chakra':     'crown',
+}
+
+function lookupChakra(folderName) {
+  return FOLDER_TO_CHAKRA[folderName.toLowerCase().trim()]
 }
 
 const s3 = new S3Client({
@@ -225,7 +231,7 @@ async function buildAudioPlan() {
   const plan = []
   for (const d of await readdir(R2_AUDIO_DIR, { withFileTypes: true })) {
     if (!d.isDirectory() || d.name.startsWith('.')) continue
-    const chakra = FOLDER_TO_CHAKRA[d.name]
+    const chakra = lookupChakra(d.name)
     if (!chakra) {
       throw new Error(
         `unknown source folder "${d.name}" — add it to FOLDER_TO_CHAKRA in scripts/upload-media.mjs`
