@@ -1161,8 +1161,27 @@ export function ChakraJourney() {
             <button type="button" className="btn btn--primary" onClick={() => startJourney(mode)}>
               Begin Again
             </button>
-            <button type="button" className="btn btn--share" onClick={handleShare}>
-              {shareCopied ? 'Link Copied!' : 'Share Your Journey'}
+            <button
+              type="button"
+              className={`btn btn--share${shareCopied ? ' btn--share--copied' : ''}`}
+              onClick={handleShare}
+            >
+              {shareCopied ? (
+                <>
+                  <svg className="btn--share__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>Link copied</span>
+                </>
+              ) : (
+                <>
+                  <svg className="btn--share__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5" />
+                    <path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5" />
+                  </svg>
+                  <span>Share Your Journey</span>
+                </>
+              )}
             </button>
             <button type="button" className="btn btn--ghost" onClick={() => navigate('/')}>
               Return Home
@@ -1575,19 +1594,24 @@ export function ChakraJourney() {
                             <button
                               type="button"
                               className={`music-playlist__item-share${isShareCopied ? ' music-playlist__item-share--copied' : ''}`}
-                              style={isShareCopied ? { color: step.color } : {}}
+                              style={{
+                                // Drive hover and copied tints from the active
+                                // chakra so the share affordance feels native
+                                // to the current chakra rather than a generic
+                                // mid-grey throughout the journey.
+                                ['--share-color' as string]: step.color,
+                              } as React.CSSProperties}
                               onClick={(e) => { void handleSongShare(song.file, e) }}
                               aria-label={isShareCopied ? `Link to ${song.title} copied` : `Share link to ${song.title}`}
                             >
                               {isShareCopied ? (
-                                <span className="music-playlist__item-share-text">Copied</span>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
                               ) : (
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                  <circle cx="18" cy="5" r="3" />
-                                  <circle cx="6" cy="12" r="3" />
-                                  <circle cx="18" cy="19" r="3" />
-                                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5" />
+                                  <path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5" />
                                 </svg>
                               )}
                             </button>
