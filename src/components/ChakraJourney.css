@@ -1281,18 +1281,26 @@
 .btn {
   border-radius: 999px;
   border: none;
-  padding: 0.6rem 1.1rem;
-  font-size: 0.88rem;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.92rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.55rem;
   transition:
     background-color 0.18s,
     color 0.18s,
     transform 0.09s,
     box-shadow 0.16s;
+}
+
+.btn__icon {
+  flex-shrink: 0;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn:focus-visible {

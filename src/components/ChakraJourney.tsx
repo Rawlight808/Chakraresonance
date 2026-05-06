@@ -9,7 +9,7 @@ import { chakraSongs } from '../data/chakraSongs'
 import type { ChakraSong } from '../data/chakraSongs'
 import { chakraScreensavers } from '../data/chakraScreensavers'
 import { mediaUrl } from '../lib/media'
-import { setStatusBarVisible } from '../lib/native'
+import { setStatusBarVisible, hapticSuccess } from '../lib/native'
 import { BodySilhouette } from './BodySilhouette'
 import './ChakraJourney.css'
 
@@ -909,6 +909,9 @@ export function ChakraJourney() {
       } else {
         await navigator.clipboard.writeText(url)
       }
+      // Fire-and-forget on iOS: a "success" haptic so the user feels the
+      // share land in addition to the visual checkmark / pill tint.
+      void hapticSuccess()
       setShareCopiedFile(file)
       window.setTimeout(() => {
         setShareCopiedFile((current) => (current === file ? null : current))
@@ -1133,9 +1136,13 @@ export function ChakraJourney() {
       if (navigator.share) {
         try {
           await navigator.share({ title: 'Chakra Resonance', text: shareText, url: shareUrl })
+          // Past the await without a throw means the user actually shared
+          // (cancel rejects the promise). Confirm with a success haptic.
+          void hapticSuccess()
         } catch { /* user cancelled */ }
       } else {
         await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`)
+        void hapticSuccess()
         setShareCopied(true)
         setTimeout(() => setShareCopied(false), 2000)
       }
@@ -1159,7 +1166,12 @@ export function ChakraJourney() {
           </p>
           <div className="journey-complete__actions">
             <button type="button" className="btn btn--primary" onClick={() => startJourney(mode)}>
-              Begin Again
+              <svg className="btn__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
+              <span>Begin Again</span>
             </button>
             <button
               type="button"
@@ -1184,7 +1196,10 @@ export function ChakraJourney() {
               )}
             </button>
             <button type="button" className="btn btn--ghost" onClick={() => navigate('/')}>
-              Return Home
+              <svg className="btn__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1V9.5z" />
+              </svg>
+              <span>Return Home</span>
             </button>
           </div>
         </div>

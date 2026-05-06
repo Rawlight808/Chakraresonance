@@ -1,0 +1,17 @@
+# Heavy media — don't index for AI/codebase search
+public/audio/
+public/screensavers/
+dist/
+.vercel/
+node_modules/
+
+# Lockfiles & system noise
+package-lock.json
+.DS_Store
+
+# Binary types anywhere in the repo
+*.mp3
+*.mp4
+*.wav
+*.flac
+*.mov

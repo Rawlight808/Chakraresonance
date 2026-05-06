@@ -17,6 +17,7 @@
  */
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
 
 const isNative = (): boolean => {
   try {
@@ -51,5 +52,34 @@ export async function setStatusBarVisible(visible: boolean): Promise<void> {
     }
   } catch (err) {
     console.warn('[native] setStatusBarVisible failed', err)
+  }
+}
+
+/**
+ * Light tap — for selection events (changing a song, toggling loop, etc.).
+ * Maps to UIImpactFeedbackGenerator(.light) on iOS, a short Vibrator pulse
+ * on Android, and a no-op everywhere else.
+ */
+export async function hapticTap(): Promise<void> {
+  if (!isNative()) return
+  try {
+    await Haptics.impact({ style: ImpactStyle.Light })
+  } catch {
+    // Haptic engine unavailable (older device, low-power mode) — silent.
+  }
+}
+
+/**
+ * Success notification — used when a meaningful action completes
+ * (share link copied, journey finished). Maps to
+ * UINotificationFeedbackGenerator(.success) on iOS — a distinctive
+ * tap-tap pattern that tells the user something landed.
+ */
+export async function hapticSuccess(): Promise<void> {
+  if (!isNative()) return
+  try {
+    await Haptics.notification({ type: NotificationType.Success })
+  } catch {
+    // See hapticTap() — silent fallback.
   }
 }

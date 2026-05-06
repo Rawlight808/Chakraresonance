@@ -1,0 +1,33 @@
+{
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.vercel/**": true,
+    "**/public/audio/**": true,
+    "**/public/screensavers/**": true
+  },
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/dist": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.vercel": true,
+    "**/public/audio": true,
+    "**/public/screensavers": true,
+    "**/package-lock.json": true
+  },
+  "search.followSymlinks": false,
+  "files.maxMemoryForLargeFilesMB": 64,
+  "typescript.tsserver.watchOptions": {
+    "excludeDirectories": [
+      "**/node_modules",
+      "**/dist",
+      "**/public/audio",
+      "**/public/screensavers"
+    ]
+  }
+}
