@@ -1486,7 +1486,14 @@ export function ChakraJourney() {
                           value={musicVolume}
                           onChange={handleMusicVolumeChange}
                           className="audio-dock__slider"
-                          style={{ accentColor: step.color }}
+                          style={{
+                            accentColor: step.color,
+                            // Custom thumb (rendered via -webkit-slider-thumb)
+                            // can't read `accent-color`, so pipe the chakra
+                            // color through a CSS variable that the thumb
+                            // and the active-track fill consume.
+                            ['--slider-color' as string]: step.color,
+                          } as React.CSSProperties}
                           aria-label="Music volume"
                         />
                         <span className="audio-dock__vol-value" aria-live="polite">

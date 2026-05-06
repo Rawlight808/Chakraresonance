@@ -881,6 +881,62 @@
   min-width: 0;
   margin: 0;
   cursor: pointer;
+  /* Native iOS WKWebView renders an ~10px-wide thumb that is hard to grab
+     with a thumb. Strip the platform appearance so we can render a thumb
+     that's sized for touch, and provide our own track behind it. The thumb
+     color comes from a per-instance CSS var (set inline alongside
+     accent-color) so each chakra still drives the slider color. */
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  height: 24px;
+  color: var(--slider-color, #ffffff);
+}
+
+.audio-dock__slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.audio-dock__slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+}
+
+.audio-dock__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  /* The track is 4px tall — pull the thumb up so its center aligns with
+     the track centerline (track 4px / 2 - thumb 22px / 2 = -9px). */
+  margin-top: -9px;
+  border-radius: 50%;
+  border: none;
+  background: var(--slider-color, #ffffff);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.audio-dock__slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--slider-color, #ffffff);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.audio-dock__slider:focus {
+  outline: none;
+}
+
+.audio-dock__slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--slider-color, #ffffff), 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
 .audio-dock__vol-value {
@@ -908,12 +964,17 @@
   white-space: nowrap;
 }
 
+/* The seek bar IS the tap target, so it needs to be tall enough to grab
+   reliably with a finger (~24px) without the visible bar looking heavy.
+   We make the button itself 24px and draw the visible 8px track via a
+   ::before centered vertically; the colored progress fill is positioned
+   absolutely on the same centerline. Width % of the fill is set via
+   inline style off currentTime / duration. */
 .audio-dock__seek {
+  position: relative;
   width: 100%;
-  height: 3px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
+  height: 24px;
+  background: transparent;
   border: none;
   padding: 0;
   cursor: pointer;
@@ -922,8 +983,25 @@
   text-align: left;
 }
 
+.audio-dock__seek::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
 .audio-dock__seek-fill {
-  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 8px;
   border-radius: 999px;
   pointer-events: none;
 }
