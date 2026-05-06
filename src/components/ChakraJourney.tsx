@@ -826,7 +826,16 @@ export function ChakraJourney() {
   }, [])
 
   const handleToneToggle = () => {
-    if (!wantsTone) return
+    // Auto mode and shared-song links both start in audioMode 'music', which
+    // sets wantsTone=false. In that state the user tapping the chakra glow
+    // (or the small tone play button) needs to *enable* tone mode, not be a
+    // no-op. Mirrors the music-side enableMusicMode() behavior.
+    if (!wantsTone) {
+      toneMutedByUserRef.current = false
+      handleAudioModeChange(wantsMusic ? 'both' : 'tone')
+      return
+    }
+
     if (toneIsPlaying) {
       stopTone()
       toneMutedByUserRef.current = true
