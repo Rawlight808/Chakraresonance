@@ -962,7 +962,6 @@
 .music-player__top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
 }
 
@@ -974,6 +973,47 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: center;
+}
+
+/* Larger, centered transport row sits between the title and the playhead.
+   Scoped under .music-player so the .audio-dock__transport-btn rules above
+   (used elsewhere with the smaller default sizing) aren't affected. Sizes
+   are roughly 2× the originals to make tap targets phone-friendly. */
+.music-player__transport {
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.15rem 0;
+}
+
+.music-player .audio-dock__transport-btn {
+  font-size: 1.7rem;
+  padding: 0.55rem 0.7rem;
+  min-width: 3rem;
+  min-height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.music-player .audio-dock__transport-btn--main {
+  font-size: 2rem;
+  width: 4.4rem;
+  height: 4.4rem;
+  padding: 0;
+}
+
+.music-player .audio-dock__transport-btn--loop {
+  width: 3.6rem;
+  height: 3.6rem;
+  padding: 0;
+  margin-left: 0.25rem;
+}
+
+.music-player .audio-dock__transport-btn--loop-on::after {
+  bottom: 0.35rem;
+  width: 0.4rem;
+  height: 0.4rem;
 }
 
 .music-player__bottom {
